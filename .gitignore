@@ -1,0 +1,8 @@
+build/
+devel/
+devel_isolated/
+el/
+el_isolated/
+src/cmake-build-debug/
+src/cmake-build-release/
+src/.idea/

@@ -1,0 +1,4 @@
+<launch>
+    <!--<node pkg="pint_cloud_hello" name = "CPPTalker" type="talker_pub"/>-->
+    <!--<node pkg="pint_cloud_hello" name = "pylistener" type="chatter_sub.py" output="screen"/>-->
+</launch>
