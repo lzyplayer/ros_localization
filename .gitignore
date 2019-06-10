@@ -6,3 +6,5 @@ el_isolated/
 src/cmake-build-debug/
 src/cmake-build-release/
 src/.idea/
+src/pint_cloud_hello/bag
+.*

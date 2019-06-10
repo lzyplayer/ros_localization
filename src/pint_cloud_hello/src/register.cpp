@@ -15,6 +15,7 @@ public:
         curr_sub = curr_node.subscribe("/lidar/vlp32_middle/PointCloud2", 1, &PointCloudProcess::pointCloudCallback,this);
         pcl::PointCloud<pcl::PointXYZI>::Ptr emptyCloud (new pcl::PointCloud<pcl::PointXYZI>());
         before_cloud = emptyCloud;
+
         full_time = ros::Duration(0);
         regis_num = 0 ;
 
@@ -26,6 +27,9 @@ public:
         /**get cloud**/
         ros::Time start = ros::Time::now();
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>());
+
+
+
         const ros::Time stamp =  point_msg->header.stamp;
         pcl::fromROSMsg(*point_msg,*cloud);
         /**empty check**/
@@ -50,21 +54,21 @@ public:
         ROS_INFO("match Score: %f",icp.getFitnessScore());
         cout<<icp.getFinalTransformation()<<endl;
         /**merge**/
-//        pcl::PointCloud<pcl::PointXYZI>::Ptr merged_cloud (new pcl::PointCloud<pcl::PointXYZI>());
-//        vector< pcl::PointXYZI, Eigen::aligned_allocator< pcl::PointXYZI > > cpoints= before_cloud->points;
-//        for (size_t i=0; i<before_cloud->size();i++){
-//            cpoints[i].intensity=2000;
-//        }
-//        before_cloud->points = cpoints;
-//        cpoints= result.points;
-//        for (size_t i=0; i<result.size();i++){
-//            cpoints[i].intensity=400;
-//        }
-//        result.points=cpoints;
-//        *merged_cloud = *before_cloud+result;
-//        sensor_msgs::PointCloud2 merged_message;
-//        pcl::toROSMsg(*merged_cloud,merged_message);
-//        curr_pub.publish(merged_message);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr merged_cloud (new pcl::PointCloud<pcl::PointXYZI>());
+        vector< pcl::PointXYZI, Eigen::aligned_allocator< pcl::PointXYZI > > cpoints= before_cloud->points;
+        for (size_t i=0; i<before_cloud->size();i++){
+            cpoints[i].intensity=2000;
+        }
+        before_cloud->points = cpoints;
+        cpoints= result.points;
+        for (size_t i=0; i<result.size();i++){
+            cpoints[i].intensity=400;
+        }
+        result.points=cpoints;
+        *merged_cloud = *before_cloud+result;
+        sensor_msgs::PointCloud2 merged_message;
+        pcl::toROSMsg(*merged_cloud,merged_message);
+        curr_pub.publish(merged_message);
 //        loop_rate->sleep();
         /**next**/
         before_cloud = cloud;
