@@ -32,7 +32,14 @@ namespace prm_localization {
             voxelgrid->setInputCloud(src_cloud);
             pcl::PointCloud<pointT>::Ptr down_src_cloud (new pcl::PointCloud<pointT>());
             voxelgrid->filter(*down_src_cloud);
-            //
+            //ready gridstep
+            boost::shared_array< float > gridsteps (new float_t[4]);
+            for (int i = 0; i < 4 ; ++i) {
+                gridsteps[i] = (i+1)*2*gridstep;
+            }
+
+
+
 
         }
 
