@@ -12,13 +12,15 @@ find_package(catkin REQUIRED COMPONENTS roscpp std_msgs rospy sensor_msgs pcl_ro
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL  REQUIRED)
-include_directories(${PCL_INCLUDE_DIRS})
+include_directories(
+  include ${catkin_INCLUDE_DIRS}${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 message(STATUS "PCL_INCLUDE_DIRS:" ${PCL_INCLUDE_DIRS})
 message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
 message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})
+
 
 
 
@@ -43,12 +45,27 @@ include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
-
-add_executable(prm_localization
-  src/prm_localization.cpp
+#nodelets
+add_library(prm_localization_nodelet src/prm_localization_nodelet.cpp)
+target_link_libraries(prm_localization_nodelet
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES}
         )
-add_dependencies(prm_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(prm_localization
+#
+#add_executable(prm_localization
+#        src/prm_localization_nodelet.cpp
+#        )
+#add_dependencies(prm_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(prm_localization
+#  ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+#)
+
+add_executable(rt_localization
+  src/rt_localization.cpp
+)
+add_dependencies(rt_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(rt_localization
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )

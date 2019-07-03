@@ -13,6 +13,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/filters/voxel_grid.h>
 
+#include <chrono>
+
 using namespace Eigen;
 using pointT=pcl::PointXYZ;
 
@@ -29,6 +31,9 @@ namespace prm_localization {
          * @param gridstep
          */
         discriptor(const pcl::PointCloud<pointT>::Ptr src_cloud, float gridstep) : gridstep(gridstep) {
+
+            //time test
+            auto start = std::chrono::system_clock::now();
             //down sample
             boost::shared_ptr<pcl::VoxelGrid<pointT>> voxelgrid (new pcl::VoxelGrid<pointT>());
             voxelgrid->setLeafSize(gridstep,gridstep,gridstep);
@@ -38,7 +43,7 @@ namespace prm_localization {
             //ready grid step
             boost::shared_array< float > gridsteps (new float_t[4]);
             for (int i = 0; i < 4 ; ++i) {
-                gridsteps[i] = (i+1)*2*gridstep;
+                gridsteps[i] = (i+1)/2*gridstep;
             }
             //select descriptor points
             select_desp_index.resize(MAX_DES/20);
@@ -48,9 +53,20 @@ namespace prm_localization {
             srcIdx.clear();
             range_search(src_cloud,down_src_cloud,select_desp_index,srcIdx,gridsteps[0]);
             //
+            auto finished = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(finished-start);
+            int a = 1;
+//            std::cout<<
 
         }
-
+        /**
+         * search near points in @src_cloud with @radius for @down_cloud
+         * @param src_cloud
+         * @param down_cloud
+         * @param srcSeedIndex
+         * @param srcIdx
+         * @param radius
+         */
         void range_search(const pcl::PointCloud<pointT>::Ptr src_cloud,const pcl::PointCloud<pointT>::Ptr down_cloud,
                 std::vector<uint32_t > &srcSeedIndex,std::vector<std::vector<int>> &srcIdx,float radius){
             pcl::KdTreeFLANN< pointT > kdTreeFlann;

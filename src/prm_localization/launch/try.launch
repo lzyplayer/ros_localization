@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+<!--manager-->
+    <node pkg="nodelet" type="nodelet" name="try_manager" args="manager" output="screen"/>
+<!--nodelet-->
+    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet try_manager"/>
+
+
+</launch>
+<!--        output="screen"-->

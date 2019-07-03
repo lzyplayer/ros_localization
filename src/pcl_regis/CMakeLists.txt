@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pint_cloud_hello)
+project(pcl_regis)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -11,7 +11,15 @@ find_package(catkin REQUIRED COMPONENTS roscpp std_msgs rospy sensor_msgs pcl_ro
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(PCL  REQUIRED)
+include_directories(
+  include ${catkin_INCLUDE_DIRS}${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
+message(STATUS "PCL_INCLUDE_DIRS:" ${PCL_INCLUDE_DIRS})
+message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
+message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -34,10 +42,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp std_msgs rospy sensor_msgs pcl_ro
 ##     * add a exec_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-)
-find_package(PCL REQUIRED)
+##     find_package(catkin REQUIRED COMPONENTS ...)
 ##   * add "message_runtime" and every package in MSG_DEP_SET to
 ##     catkin_package(CATKIN_DEPENDS ...)
 ##   * uncomment the add_*_files sections below as needed
@@ -103,7 +108,7 @@ find_package(PCL REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES pint_cloud_hello
+#  LIBRARIES pcl_regis
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -115,15 +120,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include ${catkin_INCLUDE_DIRS}
 # include
 # ${catkin_INCLUDE_DIRS}
 )
-include_directories(include ${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/pint_cloud_hello.cpp
+#   src/${PROJECT_NAME}/pcl_regis.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -134,7 +137,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/pint_cloud_hello_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/pcl_regis_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -191,7 +194,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_pint_cloud_hello.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_pcl_regis.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
@@ -199,19 +202,19 @@ link_directories(${PCL_LIBRARY_DIRS})
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(talker_pub
-  src/talker_pub.cpp
+
+add_executable(hello_pub
+  src/hello_pub.cpp
 )
-add_dependencies(talker_pub ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(talker_pub
+add_dependencies(hello_pub ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hello_pub
   ${catkin_LIBRARIES}
 )
 
-add_executable(register
-  src/register.cpp
+add_executable(hello_sub
+  src/hello_sub.cpp
 )
-add_dependencies(register ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(register
+add_dependencies(hello_sub ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hello_sub
   ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
 )
