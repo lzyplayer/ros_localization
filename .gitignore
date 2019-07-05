@@ -9,3 +9,4 @@ src/.idea/
 src/pint_cloud_hello/bag
 .*
 *.pcd
+*.bag

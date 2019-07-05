@@ -51,6 +51,12 @@ target_link_libraries(prm_localization_nodelet
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
         )
+
+add_library(globalmap_provider_nodelet src/globalmap_provider_nodelet.cpp)
+target_link_libraries(globalmap_provider_nodelet
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES}
+        )
 #
 #add_executable(prm_localization
 #        src/prm_localization_nodelet.cpp
@@ -60,7 +66,14 @@ target_link_libraries(prm_localization_nodelet
 #  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 #)
-
+#add_executable(globalmap_provider
+#        src/globalmap_provider_nodelet.cpp
+#        )
+#add_dependencies(globalmap_provider ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(globalmap_provider
+#        ${catkin_LIBRARIES}
+#        ${PCL_LIBRARIES}
+#        )
 add_executable(rt_localization
   src/rt_localization.cpp
 )

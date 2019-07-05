@@ -54,67 +54,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-//void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& point_msg)
-//{
-//    /**get cloud**/
-//    ros::Time start = ros::Time::now();
-//    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>());
-//
-//
-//
-//    const ros::Time stamp =  point_msg->header.stamp;
-//    pcl::fromROSMsg(*point_msg,*cloud);
-//    /**empty check**/
-//    if (before_cloud->empty())
-//    {
-//        before_cloud = cloud;
-//        ROS_INFO("initial");
-//        return;
-//    }
-//    /**nums output**/
-//    int nums = cloud->size();
-//    int before_nums = before_cloud->size();
-//    ROS_INFO("to regis cloud with %d points and %d points ",before_nums,nums);
-//    /**main_icp -------down Sample needed**/
-//    pcl::IterativeClosestPoint<pcl::PointXYZI,pcl::PointXYZI> icp;
-//    icp.setInputSource(cloud);
-//    icp.setInputTarget(before_cloud);
-//    pcl::PointCloud<pcl::PointXYZI> result;
-//    icp.align(result);
-//
-//    ROS_INFO("result: %d",icp.hasConverged());
-//    ROS_INFO("match Score: %f",icp.getFitnessScore());
-//    cout<<icp.getFinalTransformation()<<endl;
-//    /**merge**/
-//    pcl::PointCloud<pcl::PointXYZI>::Ptr merged_cloud (new pcl::PointCloud<pcl::PointXYZI>());
-//    vector< pcl::PointXYZI, Eigen::aligned_allocator< pcl::PointXYZI > > cpoints= before_cloud->points;
-//    for (size_t i=0; i<before_cloud->size();i++){
-//        cpoints[i].intensity=2000;
-//    }
-//    before_cloud->points = cpoints;
-//    cpoints= result.points;
-//    for (size_t i=0; i<result.size();i++){
-//        cpoints[i].intensity=400;
-//    }
-//    result.points=cpoints;
-//    *merged_cloud = *before_cloud+result;
-//    sensor_msgs::PointCloud2 merged_message;
-//    pcl::toROSMsg(*merged_cloud,merged_message);
-//    curr_pub.publish(merged_message);
-// //        loop_rate->sleep();
-//    /**next**/
-//    before_cloud = cloud;
-//    /**time used**/
-//    ros::Duration time_collapsed  =ros::Time::now() - start;
-//    ROS_INFO("regis cloud in sec:%d nsec:%d ",time_collapsed.sec,time_collapsed.nsec);
-//    regis_num++;
-//    full_time+=time_collapsed;
-//    average_regis_time = ((double_t)full_time.sec/(double_t)regis_num*(double_t)1e9+(double_t)full_time.nsec/(double_t)regis_num)/1e6;
-//    ROS_INFO("average_regis_time_is: %f ms",average_regis_time);
-//
-//
-//
-//}
+
 /**
  * The ros::init() function needs to see argc and argv so that it can perform
  * any ROS arguments and name remapping that were provided at the command line.

@@ -2,6 +2,6 @@
 <class name="prm_localization/PRMLocalizationNodelet" type="prm_localization::PRMLocalizationNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
-<!--<library path="lib/libglobalmap_server_nodelet">-->
-<!--<class name="hdl_localization/GlobalmapServerNodelet" type="hdl_localization::GlobalmapServerNodelet" base_class_type="nodelet::Nodelet" />-->
-<!--</library>-->
+<library path="lib/libglobalmap_provider_nodelet">
+<class name="prm_localization/GlobalmapProviderNodelet" type="globalmap_ns::GlobalmapProviderNodelet" base_class_type="nodelet::Nodelet" />
+</library>
