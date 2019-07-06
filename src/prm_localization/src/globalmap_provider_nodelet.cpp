@@ -2,7 +2,6 @@
 // #include "time.h"
 #include "std_msgs/String.h"
 // ros_time
-//#include <message_filters/subscriber.h>
 #include <ros/timer.h>
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
@@ -14,7 +13,6 @@
 #include <pcl/registration/icp.h>
 //#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/pcd_io.h>
-
 //nodelet
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
@@ -35,17 +33,19 @@ namespace globalmap_ns {
             mt_nh = getMTNodeHandle();
             private_nh = getPrivateNodeHandle();
             curr_pose.reset(new geometry_msgs::Pose2D());
-            /**load map**/
+            /**load map and pub once**/ //maybe add voxelgrid down sample
             std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/yuyao2dl0h4.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
             full_map.reset(new pcl::PointCloud<pcl::PointXY>());
             pcl::io::loadPCDFile(globalmap_pcd, *full_map);
             full_map->header.frame_id = "map";
+            globalmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/globalmap",1);
+            globalmap_pub.publish(full_map);
             /**trimmer**/
             kdtree.setInputCloud(full_map);
             radius = 40.0f;
             /**sub and pub**/
 //            pose_suber = mt_nh.subscribe("/TOPIC_OF_ODOM",1,&GlobalmapProviderNodelet::pose_callback,this);
-            localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",5);
+            localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",1);
             timer = nh.createTimer(ros::Duration(0.5),&GlobalmapProviderNodelet::localmap_callback,this);
             NODELET_INFO("globalmap_provider_nodelet initial completed");
         }
@@ -70,7 +70,7 @@ namespace globalmap_ns {
             pcl::PointXY searchPoint;
             searchPoint.x = curr_pose->x;
             searchPoint.y = curr_pose->y;
-            pcl::PointCloud<pcl::PointXYZI>::Ptr trimmed_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+            pcl::PointCloud<pcl::PointXY>::Ptr trimmed_cloud (new pcl::PointCloud<pcl::PointXY>);
             if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) {
 
                 trimmed_cloud->width=pointIdxRadiusSearch.size();
@@ -79,13 +79,13 @@ namespace globalmap_ns {
 
                 for (size_t i = 0; i < pointIdxRadiusSearch.size(); ++i)
                 {
-                    trimmed_cloud->points[i].x = full_map->points[pointIdxRadiusSearch[i]].x;
-                    trimmed_cloud->points[i].y = full_map->points[pointIdxRadiusSearch[i]].y;
+                    trimmed_cloud->points[i] = full_map->points[pointIdxRadiusSearch[i]];
+//                    trimmed_cloud->points[i].y = full_map->points[pointIdxRadiusSearch[i]].y;
                 }
             }
             trimmed_cloud->header.frame_id="map";
             localmap_pub.publish(trimmed_cloud);
-            NODELET_INFO(" local map sent");
+            NODELET_INFO(" local map updated");
         }
     public:
         pcl::PointCloud<pcl::PointXY>::Ptr full_map;
@@ -96,9 +96,8 @@ namespace globalmap_ns {
         ros::NodeHandle private_nh;
         // suber and puber
         ros::Publisher localmap_pub;
+        ros::Publisher globalmap_pub;
         ros::Subscriber pose_suber;
-        ros::Subscriber velodyne_suber;
-        ros::Subscriber globalMap_suber;
         // parameter
         geometry_msgs::Pose2DPtr curr_pose;
         pcl::KdTreeFLANN< pcl::PointXY > kdtree;
@@ -107,32 +106,16 @@ namespace globalmap_ns {
         ros::Timer timer ;
         // time log
         ros::Duration full_time;
-        double_t average_regis_time;
-        int regis_num;
 
 
     };
 
+}
+PLUGINLIB_EXPORT_CLASS(globalmap_ns::GlobalmapProviderNodelet, nodelet::Nodelet)
 
-//    ros::Rate *loop_rate = new ros::Rate(5);
-
-//    int main(int argc, char *argv[]) {
-//
-//
-//        ros::init(argc, argv, "rt_locator");
-//        unique_ptr<GlobalmapProviderNodelet> realtime_localization(new GlobalmapProviderNodelet());
-//        realtime_localization->onInit();
-//
 //        /**viewer**/
 //    pcl::visualization::CloudViewer viewer("window");
 //    viewer.showCloud(realtime_localization->full_map);
 //    while (!viewer.wasStopped())
 //    {
 //    }
-//        /**ros::spin**/
-//        ros::spin();
-//
-//        return 0;
-//    }
-}
-PLUGINLIB_EXPORT_CLASS(globalmap_ns::GlobalmapProviderNodelet, nodelet::Nodelet)

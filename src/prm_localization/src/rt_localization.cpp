@@ -1,11 +1,28 @@
 #include "ros/ros.h"
 // #include "time.h"
 #include "std_msgs/String.h"
-#include <pcl_ros/point_cloud.h>
-//#include <pcl/point_types.h>
+// ros_time
+#include <ros/timer.h>
+// ros_msg
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/Pose2D.h>
+// pcl
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/registration/icp.h>
+#include <pcl_conversions/pcl_conversions.h>
+//#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/io/pcd_io.h>
+//nodelet
+#include <nodelet/nodelet.h>
+#include <pluginlib/class_list_macros.h>
+
+
+
 
 using namespace std;
 
@@ -17,20 +34,45 @@ public:
     }
 
     void onInit()  { //override
+        /**parameter**/
+//        nh.getParam()
+        /**sub and pub**/
+        points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
+        localmap_suber =  nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
+        /**utility param**/
+        downSampler.setLeafSize(0.01f,0.01f,0.01f);
+    }
+
+private:
+
+    void points_callback(const sensor_msgs::PointCloud2ConstPtr points_msg){
+        pcl::PointCloud<pcl::PointXY>::Ptr curr_cloud (new pcl::PointCloud<pcl::PointXY>());
+        pcl::fromROSMsg(*points_msg, *curr_cloud);
+        downSampler.setInputCloud(curr_cloud);
+////////////////////////////////
+
+    }
+    void localmap_callback(const sensor_msgs::PointCloud2ConstPtr points_msg){
+        localmap_cloud.reset(new pcl::PointCloud<pcl::PointXY>());
+        pcl::fromROSMsg(*points_msg, *localmap_cloud);
+        const auto& stamp = points_msg->header.stamp;
+        pcl_conversions::toPCL(points_msg->header,localmap_cloud->header);
 
     }
 
 private:
 
-    ros::NodeHandle curr_node;
+    ros::NodeHandle nh;
     // suber and puber
     ros::Publisher curr_pub;
     ros::Subscriber odom_suber;
-    ros::Subscriber velodyne_suber;
-    ros::Subscriber globalMap_suber;
-//    ros::Rate *loop_rate = new ros::Rate(5);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr before_cloud ;
+    ros::Subscriber points_suber;
+    ros::Subscriber localmap_suber;
+    // clouds
+    pcl::PointCloud<pcl::PointXY>::Ptr localmap_cloud;
 
+    // utility
+    pcl::VoxelGrid<pcl::PointCloud<pcl::PointXYZ>> downSampler;
     // time log
     ros::Duration full_time;
     double_t average_regis_time;
@@ -46,8 +88,8 @@ int main(int argc, char *argv[])
 {
 
     ros::init(argc, argv, "rt_locator");
-    unique_ptr<RealTime_Localization> realtime_localization (new RealTime_Localization());
-//    realtime_localization->onInit();
+    unique_ptr<RealTime_Localization> realtime_localization ;//(new RealTime_Localization())
+    realtime_localization->onInit();
 
     ros::spin();
 
