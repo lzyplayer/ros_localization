@@ -6,6 +6,7 @@
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose2D.h>
+#include <tf/transform_broadcaster.h>
 // pcl
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
@@ -21,11 +22,15 @@
 //nodelet
 //#include <nodelet/nodelet.h>
 //#include <pluginlib/class_list_macros.h>
-
+//cpp
+#include <ctime>
+//untility
+#include <prm_localization/transform_utility.hpp>
 
 
 
 using namespace std;
+
 
 class RealTime_Localization{
 public:
@@ -41,16 +46,17 @@ public:
         trim_high= 4.0f;
         curr_pose.setIdentity(4,4);
         icp.setMaximumIterations(100);
-        icp.setRANSACOutlierRejectionThreshold(0.1);
-        icp.setMaxCorrespondenceDistance(0.1*100);
-        icp.setTransformationEpsilon(1e-9);
+        icp.setRANSACOutlierRejectionThreshold(0.04);
+        icp.setMaxCorrespondenceDistance(0.04*100);
+        icp.setTransformationEpsilon(1e-8);
+
 //        icp.set
         /**sub and pub**/
         points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
         localmap_suber =  nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
-        curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",5);
+        curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
         /**utility param**/
-        downSampler.setLeafSize(0.01f,0.01f,0.01f);
+        downSampler.setLeafSize(0.05f,0.05f,0.05f);
     }
 
 private:
@@ -68,12 +74,33 @@ private:
         icp.setInputTarget(localmap_cloud);
         icp.setInputSource(flat_cloud);
         pcl::PointCloud<pcl::PointXYZ> result_cloud ;
+        //icp start
+        clock_t start = clock();
         icp.align(result_cloud,curr_pose);//,curr_pose
+        clock_t end = clock();
+        ROS_INFO("icp regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
+        ROS_INFO("fitness score = %f ",icp.getFitnessScore());
+        Matrix4f transform = icp.getFinalTransformation();
+        Vector3f euler = rot2euler(transform.block(0,0,3,3));
+        ROS_INFO("x = %f, y = %f, theta = %f ",transform(0,3),transform(1,3),euler(2));
+        //
         curr_pose=icp.getFinalTransformation();
-        //pub
-        pcl_conversions::toPCL(points_msg->header,result_cloud.header);
-        result_cloud.header.frame_id = "map";
-        curr_pointcloud_pub.publish(result_cloud);
+        //pub (optional)
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr coloredCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        coloredCloud->width = result_cloud.width;
+        coloredCloud->height = 1;//result_cloud.height
+        coloredCloud->points.resize(coloredCloud->width*coloredCloud->height);
+
+        for (size_t i=0;i<result_cloud.width;i++){
+            coloredCloud->points[i].x = result_cloud.points[i].x;
+            coloredCloud->points[i].y = result_cloud.points[i].y;
+            coloredCloud->points[i].z = result_cloud.points[i].z;
+            coloredCloud->points[i].b=255;
+        }
+        //
+        pcl_conversions::toPCL(points_msg->header,coloredCloud->header);
+        coloredCloud->header.frame_id = "map";
+        curr_pointcloud_pub.publish(coloredCloud);
     }
 
     void localmap_callback(const sensor_msgs::PointCloud2ConstPtr& points_msg){
