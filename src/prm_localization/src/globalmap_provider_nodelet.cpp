@@ -5,17 +5,20 @@
 #include <ros/timer.h>
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
-#include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/PoseStamped.h>
 // pcl
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
+#include <pcl_conversions/pcl_conversions.h>
 //#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/pcd_io.h>
 //nodelet
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
+#include <geometry_msgs/Pose2D.h>
+
 namespace globalmap_ns {
     using namespace std;
 
@@ -32,10 +35,10 @@ namespace globalmap_ns {
             nh = getNodeHandle();
             mt_nh = getMTNodeHandle();
             private_nh = getPrivateNodeHandle();
-            curr_pose.reset(new geometry_msgs::Pose2D());
+            curr_pose.reset(new geometry_msgs::PoseStamped());
             /**load map and pub once**/ //maybe add voxelgrid down sample
             std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/yuyao2dl0h4.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
-            full_map.reset(new pcl::PointCloud<pcl::PointXY>());
+            full_map.reset(new pcl::PointCloud<pcl::PointXYZ>());
             pcl::io::loadPCDFile(globalmap_pcd, *full_map);
             full_map->header.frame_id = "map";
             globalmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/globalmap",1);
@@ -55,7 +58,7 @@ namespace globalmap_ns {
          * update newest pose
          * @param pose_msg
          */
-        void pose_callback(const geometry_msgs::Pose2D& pose_msg){
+        void pose_callback(const geometry_msgs::PoseStamped& pose_msg){
             *curr_pose = pose_msg;
         }
         /**
@@ -67,10 +70,11 @@ namespace globalmap_ns {
         void localmap_callback(const ros::TimerEvent& event){
             std::vector<int> pointIdxRadiusSearch;
             std::vector<float> pointRadiusSquaredDistance;
-            pcl::PointXY searchPoint;
-            searchPoint.x = curr_pose->x;
-            searchPoint.y = curr_pose->y;
-            pcl::PointCloud<pcl::PointXY>::Ptr trimmed_cloud (new pcl::PointCloud<pcl::PointXY>);
+            pcl::PointXYZ searchPoint;
+            searchPoint.x = curr_pose->pose.position.x;
+            searchPoint.y = curr_pose->pose.position.y;
+            searchPoint.z = curr_pose->pose.position.z;
+            pcl::PointCloud<pcl::PointXYZ>::Ptr trimmed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
             if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) {
 
                 trimmed_cloud->width=pointIdxRadiusSearch.size();
@@ -84,11 +88,12 @@ namespace globalmap_ns {
                 }
             }
             trimmed_cloud->header.frame_id="map";
+            pcl_conversions::toPCL(ros::Time::now(), trimmed_cloud->header.stamp);
             localmap_pub.publish(trimmed_cloud);
             NODELET_INFO(" local map updated");
         }
     public:
-        pcl::PointCloud<pcl::PointXY>::Ptr full_map;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr full_map;
     private:
         //ros node handle
         ros::NodeHandle nh;
@@ -99,8 +104,8 @@ namespace globalmap_ns {
         ros::Publisher globalmap_pub;
         ros::Subscriber pose_suber;
         // parameter
-        geometry_msgs::Pose2DPtr curr_pose;
-        pcl::KdTreeFLANN< pcl::PointXY > kdtree;
+        geometry_msgs::PoseStampedPtr curr_pose;
+        pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;
         float radius;
         // ros timer
         ros::Timer timer ;

@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <launch>
+<!--node-->
+
 <!--manager-->
     <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>
 <!--nodelet-->
-    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>
+<!--    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>-->
     <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager"/>
 
 
