@@ -6,7 +6,8 @@
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose2D.h>
-#include <tf/transform_broadcaster.h>
+
+#include <nav_msgs/Odometry.h>
 // pcl
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
@@ -19,6 +20,12 @@
 #include <pcl/io/pcd_io.h>
 //eigen
 #include <Eigen/Dense>
+//tf
+#include "tf/transform_datatypes.h"
+#include "Eigen/Core"
+#include "Eigen/Geometry"
+#include <tf/transform_broadcaster.h>
+#include <tf_conversions/tf_eigen.h>
 //nodelet
 //#include <nodelet/nodelet.h>
 //#include <pluginlib/class_list_macros.h>
@@ -45,16 +52,18 @@ public:
         trim_low = 0.0f;
         trim_high= 4.0f;
         curr_pose.setIdentity(4,4);
-        icp.setMaximumIterations(100);
+        icp.setMaximumIterations(150);
         icp.setRANSACOutlierRejectionThreshold(0.04);
         icp.setMaxCorrespondenceDistance(0.04*100);
-        icp.setTransformationEpsilon(1e-8);
+        icp.setTransformationEpsilon(1e-7);
 
 //        icp.set
         /**sub and pub**/
+//        odom_pub = nh.advertise<nav_msgs::Odometry>("velodyne_link",50);
         points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
         localmap_suber =  nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
         curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
+        timer = nh.createTimer(ros::Duration(0.1),&RealTime_Localization::tfpublisher,this);
         /**utility param**/
         downSampler.setLeafSize(0.05f,0.05f,0.05f);
     }
@@ -69,7 +78,8 @@ private:
         downSampler.setInputCloud(curr_cloud);
         downSampler.filter(*filtered_cloud);
         //trim and 2d
-        auto flat_cloud  = down3dto2d(filtered_cloud,trim_low,trim_high);
+        auto flat_cloud  = trimInputCloud(filtered_cloud, trim_low, trim_high);
+
         //icp
         icp.setInputTarget(localmap_cloud);
         icp.setInputSource(flat_cloud);
@@ -101,8 +111,18 @@ private:
         pcl_conversions::toPCL(points_msg->header,coloredCloud->header);
         coloredCloud->header.frame_id = "map";
         curr_pointcloud_pub.publish(coloredCloud);
+
+
+
     }
 
+    void tfpublisher(const ros::TimerEvent& event){
+        //warning should not be time now
+        odom_broadcaster.sendTransform(matrix2transform(ros::Time::now(),curr_pose,"map","velodyne"));
+
+
+
+    }
     void localmap_callback(const sensor_msgs::PointCloud2ConstPtr& points_msg){
         localmap_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>());
         pcl::fromROSMsg(*points_msg, *localmap_cloud);
@@ -112,14 +132,18 @@ private:
 
     }
 
-    pcl::PointCloud<pcl::PointXYZ>::ConstPtr down3dto2d (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud,const float low,const float high) const {
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr trimInputCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,
+                                                            const float low, const float high) const {
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2d (new pcl::PointCloud<pcl::PointXYZ>());
         for(size_t i=0;i<cloud->points.size();++i){
             if (cloud->points[i].z<high && cloud->points[i].z>low) {
                 pcl::PointXYZ currPoint;
                 currPoint.x =cloud->points[i].x;
                 currPoint.y =cloud->points[i].y;
-                currPoint.z =0;
+                //2d
+//                currPoint.z =0;
+                //3d
+                currPoint.z =cloud->points[i].z;
                 cloud2d->points.push_back(currPoint);
             }
         }
@@ -144,6 +168,9 @@ private:
     ros::Subscriber odom_suber;
     ros::Subscriber points_suber;
     ros::Subscriber localmap_suber;
+//    ros::Publisher odom_pub;
+    ros::Timer timer;
+    tf::TransformBroadcaster odom_broadcaster;
     // clouds
     pcl::PointCloud<pcl::PointXYZ>::Ptr localmap_cloud;
 

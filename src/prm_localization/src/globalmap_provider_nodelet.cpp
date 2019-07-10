@@ -36,12 +36,21 @@ namespace globalmap_ns {
             mt_nh = getMTNodeHandle();
             private_nh = getPrivateNodeHandle();
             curr_pose.reset(new geometry_msgs::PoseStamped());
+            float downsample_resolution = 0.05f;//%0.1private_nh.param<double>("downsample_resolution", 0.1);
             /**load map and pub once**/ //maybe add voxelgrid down sample
             std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
             full_map.reset(new pcl::PointCloud<pcl::PointXYZ>());
             pcl::io::loadPCDFile(globalmap_pcd, *full_map);
+            //pcdownsample
+            boost::shared_ptr<pcl::VoxelGrid<pcl::PointXYZ>> voxelgrid(new pcl::VoxelGrid<pcl::PointXYZ>());
+            voxelgrid->setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
+            voxelgrid->setInputCloud(full_map);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>());
+            voxelgrid->filter(*filtered);
+            full_map = filtered;
+            //
             full_map->header.frame_id = "map";
-            globalmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/globalmap",1);
+            globalmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/globalmap",5);
             globalmap_pub.publish(full_map);
             /**trimmer**/
             kdtree.setInputCloud(full_map);
@@ -92,7 +101,7 @@ namespace globalmap_ns {
                 }
             }
             trimmed_cloud->header.frame_id="map";
-            pcl_conversions::toPCL(ros::Time::now(), trimmed_cloud->header.stamp);
+            pcl_conversions::toPCL(curr_pose->header.stamp, trimmed_cloud->header.stamp);
             localmap_pub.publish(trimmed_cloud);
             NODELET_INFO(" local map updated");
         }
