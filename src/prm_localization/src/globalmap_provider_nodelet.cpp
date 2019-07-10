@@ -35,8 +35,11 @@ namespace globalmap_ns {
             nh = getNodeHandle();
             mt_nh = getMTNodeHandle();
             private_nh = getPrivateNodeHandle();
+            //para
+            float downsample_resolution = private_nh.param<float>("downsample_resolution", 0.05f);
+            radius = private_nh.param<float>("radius", 40.0f);
+
             curr_pose.reset(new geometry_msgs::PoseStamped());
-            float downsample_resolution = 0.05f;//%0.1private_nh.param<double>("downsample_resolution", 0.1);
             /**load map and pub once**/ //maybe add voxelgrid down sample
             std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
             full_map.reset(new pcl::PointCloud<pcl::PointXYZ>());
@@ -54,11 +57,10 @@ namespace globalmap_ns {
             globalmap_pub.publish(full_map);
             /**trimmer**/
             kdtree.setInputCloud(full_map);
-            radius = 40.0f;
             /**sub and pub**/
 //            pose_suber = mt_nh.subscribe("/TOPIC_OF_ODOM",1,&GlobalmapProviderNodelet::pose_callback,this);
             localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",1);
-            timer = nh.createTimer(ros::Duration(0.5),&GlobalmapProviderNodelet::localmap_callback,this);
+            timer = nh.createTimer(ros::Duration(3),&GlobalmapProviderNodelet::localmap_callback,this);
             NODELET_INFO("globalmap_provider_nodelet initial completed");
         }
 
@@ -95,9 +97,9 @@ namespace globalmap_ns {
                     trimmed_cloud->points[i].x = full_map->points[pointIdxRadiusSearch[i]].x;
                     trimmed_cloud->points[i].y = full_map->points[pointIdxRadiusSearch[i]].y;
                     trimmed_cloud->points[i].z = full_map->points[pointIdxRadiusSearch[i]].z;
-                    trimmed_cloud->points[i].g =255;
-                    trimmed_cloud->points[i].b =0;
-                    trimmed_cloud->points[i].r =0;
+                    trimmed_cloud->points[i].g =0;
+                    trimmed_cloud->points[i].b =255;
+                    trimmed_cloud->points[i].r =150;
                 }
             }
             trimmed_cloud->header.frame_id="map";

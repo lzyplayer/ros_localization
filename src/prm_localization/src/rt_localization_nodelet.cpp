@@ -27,45 +27,58 @@
 #include <tf/transform_broadcaster.h>
 #include <tf_conversions/tf_eigen.h>
 //nodelet
-//#include <nodelet/nodelet.h>
-//#include <pluginlib/class_list_macros.h>
+#include <nodelet/nodelet.h>
+#include <pluginlib/class_list_macros.h>
 //cpp
 #include <ctime>
 //untility
 #include <prm_localization/transform_utility.hpp>
 
 
-
+namespace rt_localization_ns{
 using namespace std;
 
 
-class RealTime_Localization{
+class RealTime_Localization: public nodelet::Nodelet {
 public:
     RealTime_Localization(){
     }
     virtual  ~RealTime_Localization(){
     }
 
-    void onInit()  { //override
+    void onInit() override {
+        /**init**/
+        nh = getNodeHandle();
+        mt_nh = getMTNodeHandle();
+        private_nh = getPrivateNodeHandle();
         /**parameter**/
 //        nh.getParam()
-        trim_low = 0.0f;
-        trim_high= 4.0f;
+        trim_low = private_nh.param<float>("trim_low", 0.0f);
+        trim_high = private_nh.param<float>("trim_high", 4.0f);
+        float init_x = private_nh.param<float>("init_x", 0.0f);
+        float init_y = private_nh.param<float>("init_y", 0.0f);
+        double init_raw = private_nh.param<double>("init_raw", 0.0);
+        int icpMaximumIterations = private_nh.param<int>("icpMaximumIterations", 50);
+        float icpRANSACOutlierRejectionThreshold = private_nh.param<float>("icpRANSACOutlierRejectionThreshold", 0.04f);
+        float icpTransformationEpsilon = private_nh.param<float>("icpTransformationEpsilon", 1e-7);
+        float downSampleSize = private_nh.param<float>("downSampleSize", 0.05f);
+
         curr_pose.setIdentity(4,4);
-        icp.setMaximumIterations(150);
-        icp.setRANSACOutlierRejectionThreshold(0.04);
-        icp.setMaxCorrespondenceDistance(0.04*100);
-        icp.setTransformationEpsilon(1e-7);
+        icp.setMaximumIterations(icpMaximumIterations);
+        icp.setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
+        icp.setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
+        icp.setTransformationEpsilon(icpTransformationEpsilon);
 
 //        icp.set
         /**sub and pub**/
 //        odom_pub = nh.advertise<nav_msgs::Odometry>("velodyne_link",50);
-        points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
-        localmap_suber =  nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
-        curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
+        points_suber = mt_nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
+        localmap_suber =  mt_nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
+//        curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
+        curr_pointcloud_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
         timer = nh.createTimer(ros::Duration(0.1),&RealTime_Localization::tfpublisher,this);
         /**utility param**/
-        downSampler.setLeafSize(0.05f,0.05f,0.05f);
+        downSampler.setLeafSize(downSampleSize,downSampleSize,downSampleSize);
     }
 
 private:
@@ -88,11 +101,12 @@ private:
         clock_t start = clock();
         icp.align(result_cloud,curr_pose);//,curr_pose
         clock_t end = clock();
-        ROS_INFO("icp regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
-        ROS_INFO("fitness score = %f ",icp.getFitnessScore());
+        NODELET_INFO("icp regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
+        NODELET_INFO("fitness score = %f ",icp.getFitnessScore());
+        NODELET_INFO(" ");
         Matrix4f transform = icp.getFinalTransformation();
-        Vector3f euler = rot2euler(transform.block(0,0,3,3));
-        ROS_INFO("x = %f, y = %f, theta = %f ",transform(0,3),transform(1,3),euler(2));
+//        Vector3f euler = rot2euler(transform.block(0,0,3,3));
+//        NODELET_INFO("x = %f, y = %f, theta = %f ",transform(0,3),transform(1,3),euler(2));
         //
         curr_pose=icp.getFinalTransformation();
         //pub (optional)
@@ -105,7 +119,8 @@ private:
             coloredCloud->points[i].x = result_cloud.points[i].x;
             coloredCloud->points[i].y = result_cloud.points[i].y;
             coloredCloud->points[i].z = result_cloud.points[i].z;
-            coloredCloud->points[i].b=255;
+            coloredCloud->points[i].r=255;
+            coloredCloud->points[i].g=255;
         }
         //
         pcl_conversions::toPCL(points_msg->header,coloredCloud->header);
@@ -117,7 +132,7 @@ private:
     }
 
     void tfpublisher(const ros::TimerEvent& event){
-        //warning should not be time now
+        //warning :should not be time now
         odom_broadcaster.sendTransform(matrix2transform(ros::Time::now(),curr_pose,"map","velodyne"));
 
 
@@ -158,7 +173,10 @@ private:
 
 private:
 
+    //ros node handle
     ros::NodeHandle nh;
+    ros::NodeHandle mt_nh;
+    ros::NodeHandle private_nh;
     // para
     float trim_low;
     float trim_high;
@@ -186,65 +204,29 @@ private:
 };
 
 
-
-
-int main(int argc, char *argv[])
-{
-
-    //test code
-//    pcl::PointCloud<pcl::PointXYZ>::Ptr mycloud (new pcl::PointCloud<pcl::PointXYZ>());
-//    pcl::PointXYZ pointXy;
-//    pointXy.x=2;
-//    pointXy.y=2;
-//
-//    mycloud->points.push_back(pointXy);
-//    //
-
-
-
-    ros::init(argc, argv, "rt_locator");
-    RealTime_Localization realtime_localization ;//(new RealTime_Localization())
-    realtime_localization.onInit();
-
-    ros::spin();
-
-    return 0;
 }
+PLUGINLIB_EXPORT_CLASS(rt_localization_ns::RealTime_Localization, nodelet::Nodelet)
 
-
-/**
- * The ros::init() function needs to see argc and argv so that it can perform
- * any ROS arguments and name remapping that were provided at the command line.
- * For programmatic remappings you can use a different version of init() which takes
- * remappings directly, but for most command-line programs, passing argc and argv is
- * the easiest way to do it.  The third argument to init() is the name of the node.
- *
- * You must call one of the versions of ros::init() before using any other
- * part of the ROS system.
- */
-/**
-* NodeHandle is the main access point to communications with the ROS system.
-* The first NodeHandle constructed will fully initialize this node, and the last
-* NodeHandle destructed will close down the node.
-*/
-/**
-* The subscribe() call is how you tell ROS that you want to receive messages
-* on a given topic.  This invokes a call to the ROS
-* master node, which keeps a registry of who is publishing and who
-* is subscribing.  Messages are passed to a callback function, here
-* called chatterCallback.  subscribe() returns a Subscriber object that you
-* must hold on to until you want to unsubscribe.  When all copies of the Subscriber
-* object go out of scope, this callback will automatically be unsubscribed from
-* this topic.
-*
-* The second parameter to the subscribe() function is the size of the message
-* queue.  If messages are arriving faster than they are being processed, this
-* is the number of messages that will be buffered up before beginning to throw
-* away the oldest ones.
-*/
-
-/**
- * ros::spin() will enter a loop, pumping callbacks.  With this version, all
- * callbacks will be called from within this thread (the main one).  ros::spin()
- * will exit when Ctrl-C is pressed, or the node is shutdown by the master.
- */
+//
+//int main(int argc, char *argv[])
+//{
+//
+//    //test code
+////    pcl::PointCloud<pcl::PointXYZ>::Ptr mycloud (new pcl::PointCloud<pcl::PointXYZ>());
+////    pcl::PointXYZ pointXy;
+////    pointXy.x=2;
+////    pointXy.y=2;
+////
+////    mycloud->points.push_back(pointXy);
+////    //
+//
+//
+//
+//    ros::init(argc, argv, "rt_locator");
+//    RealTime_Localization realtime_localization ;//(new RealTime_Localization())
+//    realtime_localization.onInit();
+//
+//    ros::spin();
+//
+//    return 0;
+//}
