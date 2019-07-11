@@ -1,1 +1,10 @@
-catkin_ws
+#### localization
+
+------
+
+:)
+
+2. set parameter in `minimalBringUp.launch`
+3. `roslaunch prm_localization minimalBringUp.launch `
+4. `rosbag play PATH_TO_YOUR_BAG -r 0.4`
+5. current version only require `lidar_data`, set a low rosbag publish rate if your PC have low performance.
