@@ -5,23 +5,28 @@
 <!--manager-->
     <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>
 <!--nodelet-->
-<!--    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>-->
-    <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager">
-        <param name="trim_low" value="0.0f" />
-        <param name="trim_high" value="4.0f" />
-        <param name="init_x" value="0.0f" />
-        <param name="init_y" value="0.0f" />
+<!-- same meaning param filed in two nodes must have same values-->
+    <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="load prm_localization/RealTime_Localization manager">
+        <param name="trim_low" value="0.0" />
+        <param name="trim_high" value="4.0" />
+        <param name="init_x" value="0.0" />
+        <param name="init_y" value="0.0" />
         <param name="init_raw" value="0.0" />
         <param name="icpMaximumIterations" value="50" />
-        <param name="icpRANSACOutlierRejectionThreshold" value="0.04f" />
+        <param name="icpRANSACOutlierRejectionThreshold" value="0.04" />
         <param name="icpTransformationEpsilon" value="1e-7" />
-        <param name="downSampleSize" value="0.05f" />
+        <param name="downSampleSize" value="0.05" />
     </node>
-    <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/RealTime_Localization manager">
-        <param name="downsample_resolution" value="0.05f" />
-        <param name="radius" value="40.0f" />
+    <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager">
+        <param name="downsample_resolution" value="0.05" />
+        <param name="init_x" value="0.0" />
+        <param name="init_y" value="0.0" />
+        <param name="init_raw" value="0.0" />
+        <param name="radius" value="40.0" />
+        <param name="mapUpdateTime" value="8" />
+        <param name="global_map_pcd_path" value="/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd" />
     </node>
-
 
 </launch>
 <!--        output="screen"-->
+<!--    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>-->

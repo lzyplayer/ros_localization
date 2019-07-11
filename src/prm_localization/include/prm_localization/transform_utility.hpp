@@ -20,9 +20,21 @@ Vector3f rot2euler(const Matrix3f& m){
     return m.eulerAngles(0,1,2);
 }
 
+Quaternionf euler2quat(const float xr_pi,const float yp_pi,const float zy_pi){
+    Quaternionf q;
+    q = AngleAxisf(xr_pi, Vector3f::UnitX())
+        * AngleAxisf(yp_pi, Vector3f::UnitY())
+        * AngleAxisf(zy_pi, Vector3f::UnitZ());
+    return q;
+}
+
+Vector3f quat2euler(const Quaternionf& quaternionf){
+    return quaternionf.toRotationMatrix().eulerAngles(0,1,2);
+}
+
 
 /**
- *
+ * from hdl_localization
  * @brief convert a Eigen::Matrix to TransformedStamped
  * @param stamp           timestamp
  * @param pose            pose matrix
