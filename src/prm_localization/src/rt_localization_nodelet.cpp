@@ -77,7 +77,10 @@ namespace rt_localization_ns{
 //        icp.set
             /**sub and pub**/
 //        odom_pub = nh.advertise<nav_msgs::Odometry>("velodyne_link",50);
-            points_suber = mt_nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
+            points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
+//            localmap_suber =  nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
+//            curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
+//            points_suber = mt_nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
             localmap_suber =  mt_nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
             curr_pointcloud_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
             /**utility param**/
@@ -117,7 +120,9 @@ namespace rt_localization_ns{
                 lock_guard<mutex> lockGuard(curr_pose_mutex);
                 if(points_msg->header.stamp>curr_pose_stamp){
                     curr_pose=icp.getFinalTransformation();
+                    NODELET_INFO("time to former stamp = %f seconds",points_msg->header.stamp.toSec()-curr_pose_stamp.toSec());
                     curr_pose_stamp = points_msg->header.stamp;
+
                 } else {
                     NODELET_INFO("abandon former regis result");
                     return;

@@ -43,7 +43,7 @@ namespace globalmap_ns {
             int mapUpdateTime =private_nh.param<int>("mapUpdateTime", 8);
             auto downsample_resolution = private_nh.param<float>("downsample_resolution", 0.05f);
             std::string globalmap_pcd = private_nh.param<std::string>("global_map_pcd_path", "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd");
-            NODELET_INFO("%f",radius);
+            NODELET_INFO("radius: %f",radius);
             NODELET_INFO("%s",globalmap_pcd.c_str());
             /**initial pose**/
             curr_pose.reset(new geometry_msgs::PoseStamped());

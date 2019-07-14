@@ -12,7 +12,7 @@
         <param name="init_x" value="0.0" />
         <param name="init_y" value="0.0" />
         <param name="init_raw" value="0.0" />
-        <param name="icpMaximumIterations" value="50" />
+        <param name="icpMaximumIterations" value="10" />
         <param name="icpRANSACOutlierRejectionThreshold" value="0.04" />
         <param name="icpTransformationEpsilon" value="1e-7" />
         <param name="downSampleSize" value="0.05" />
