@@ -16,6 +16,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pclomp/ndt_omp.h>
 //#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/pcd_io.h>
 //eigen
@@ -69,12 +70,18 @@ namespace rt_localization_ns{
             curr_pose(0,3) =init_x;
             curr_pose(1,3) =init_y;
             curr_pose_stamp =ros::Time(0.001);
-            //
-            icp.setMaximumIterations(icpMaximumIterations);
-            icp.setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
-            icp.setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
-            icp.setTransformationEpsilon(icpTransformationEpsilon);
-//        icp.set
+            //ndt_omp
+            pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
+            ndt->setTransformationEpsilon(0.01);
+            ndt->setResolution(1.0);
+            ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
+            registration = ndt;
+            //registration
+//            registration.setMaximumIterations(icpMaximumIterations);
+//            registration.setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
+//            registration.setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
+//            registration.setTransformationEpsilon(icpTransformationEpsilon);
+//        registration.set
             /**sub and pub**/
 //        odom_pub = nh.advertise<nav_msgs::Odometry>("velodyne_link",50);
             points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
@@ -101,25 +108,25 @@ namespace rt_localization_ns{
             //trim and 2d
             auto flat_cloud  = trimInputCloud(filtered_cloud, trim_low, trim_high);
 
-            //icp
-            icp.setInputTarget(localmap_cloud);
-            icp.setInputSource(flat_cloud);
+            //registration
+            registration->setInputTarget(localmap_cloud);
+            registration->setInputSource(flat_cloud);
             pcl::PointCloud<pcl::PointXYZ> result_cloud ;
-            //icp start
+            //registration start
             clock_t start = clock();
-            icp.align(result_cloud,curr_pose);//,curr_pose
+            registration->align(result_cloud,curr_pose);//,curr_pose
             clock_t end = clock();
-            NODELET_INFO("icp regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
-//            NODELET_INFO("fitness score = %f ",icp.getFitnessScore());
+            NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
+//            NODELET_INFO("fitness score = %f ",registration.getFitnessScore());
 //            NODELET_INFO(" ");
-            Matrix4f transform = icp.getFinalTransformation();
+            Matrix4f transform = registration->getFinalTransformation();
 //        Vector3f euler = rot2euler(transform.block(0,0,3,3));
 //        NODELET_INFO("x = %f, y = %f, theta = %f ",transform(0,3),transform(1,3),euler(2));
             //
             {
                 lock_guard<mutex> lockGuard(curr_pose_mutex);
                 if(points_msg->header.stamp>curr_pose_stamp){
-                    curr_pose=icp.getFinalTransformation();
+                    curr_pose=transform;
                     NODELET_INFO("time to former stamp = %f seconds",points_msg->header.stamp.toSec()-curr_pose_stamp.toSec());
                     curr_pose_stamp = points_msg->header.stamp;
 
@@ -214,7 +221,7 @@ namespace rt_localization_ns{
         pcl::PointCloud<pcl::PointXYZ>::Ptr localmap_cloud;
 
         // utility
-        pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+        pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration;
         pcl::VoxelGrid<pcl::PointXYZ> downSampler;
         std::mutex curr_pose_mutex;
         // time log

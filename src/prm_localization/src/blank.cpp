@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
         clock_t start = clock();
         icp.align(*result);
         clock_t end = clock();
-        cout<<"icp in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
-        cout<<"with"<< "icp.setRANSACOutlierRejectionThreshold() = "<< i <<endl;
-        cout<<"icp.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
+        cout<<"registration in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
+        cout<<"with"<< "registration.setRANSACOutlierRejectionThreshold() = "<< i <<endl;
+        cout<<"registration.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
         cout<<endl;
 
     }
@@ -68,15 +68,15 @@ int main(int argc, char *argv[]) {
         clock_t start = clock();
         icp.align(*result);
         clock_t end = clock();
-        cout<<"icp in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
+        cout<<"registration in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
         cout<<"with"<< "TransformationEpsilon() = "<< i <<endl;
-        cout<<"icp.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
+        cout<<"registration.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
         cout<<endl;
 
     }
 //    clock_t start = clock();
 
-//    icp.align(*result);
+//    registration.align(*result);
 
 //    clock_t end = clock();
     //color

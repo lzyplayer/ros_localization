@@ -47,7 +47,7 @@ public:
         icp.setInputSource(cloud);
         icp.setInputTarget(before_cloud);
         pcl::PointCloud<pcl::PointXYZI> result;
-//        icp.set
+//        registration.set
         icp.align(result);
 
         ROS_INFO("result: %d",icp.hasConverged());
