@@ -6,7 +6,6 @@
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose2D.h>
-
 #include <nav_msgs/Odometry.h>
 // pcl
 #include <pcl/filters/voxel_grid.h>
@@ -59,14 +58,18 @@ namespace rt_localization_ns{
             trim_high = private_nh.param<float>("trim_high", 4.0f);
             auto init_x = private_nh.param<float>("init_x", 0.0f);
             auto init_y = private_nh.param<float>("init_y", 0.0f);
-            auto init_raw = private_nh.param<double>("init_raw", 0.0);
-            auto icpMaximumIterations = private_nh.param<int>("icpMaximumIterations", 50);
-            auto icpRANSACOutlierRejectionThreshold = private_nh.param<float>("icpRANSACOutlierRejectionThreshold", 0.04f);
-            auto icpTransformationEpsilon = private_nh.param<float>("icpTransformationEpsilon", 1e-8);
+            auto init_yaw = private_nh.param<double>("init_yaw", 0.0);
+//            auto icpMaximumIterations = private_nh.param<int>("icpMaximumIterations", 50);
+//            auto icpRANSACOutlierRejectionThreshold = private_nh.param<float>("icpRANSACOutlierRejectionThreshold", 0.04f);
+//            auto icpTransformationEpsilon = private_nh.param<float>("icpTransformationEpsilon", 1e-8);
             auto downSampleSize = private_nh.param<float>("downSampleSize", 0.05f);
+            map_tf = private_nh.param<std::string>("map_tf", "map");
+            base_lidar_tf = private_nh.param<std::string>("base_lidar_tf", "velodyne");
+
+
             //init_pose
             curr_pose.setIdentity(4,4);
-            curr_pose.block(0,0,3,3) = euler2rot(0,0,init_raw);
+            curr_pose.block(0,0,3,3) = euler2rot(0,0,init_yaw);
             curr_pose(0,3) =init_x;
             curr_pose(1,3) =init_y;
             curr_pose_stamp =ros::Time(0.001);
@@ -76,18 +79,15 @@ namespace rt_localization_ns{
             ndt->setResolution(1.0);
             ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
             registration = ndt;
-            //registration
+            //registration-icp
 //            registration.setMaximumIterations(icpMaximumIterations);
 //            registration.setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
 //            registration.setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
 //            registration.setTransformationEpsilon(icpTransformationEpsilon);
 //        registration.set
             /**sub and pub**/
-//        odom_pub = nh.advertise<nav_msgs::Odometry>("velodyne_link",50);
+            odom_pub = nh.advertise<nav_msgs::Odometry>(map_tf,50);
             points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
-//            localmap_suber =  nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
-//            curr_pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
-//            points_suber = mt_nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
             localmap_suber =  mt_nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
             curr_pointcloud_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
             /**utility param**/
@@ -137,8 +137,21 @@ namespace rt_localization_ns{
             }
 
             //publish tf
-            transformBroadcaster.sendTransform(matrix2transform(points_msg->header.stamp,curr_pose,"map","velodyne"));
-
+            transformBroadcaster.sendTransform(matrix2transform(points_msg->header.stamp,curr_pose,map_tf,base_lidar_tf));
+            //publish odom (optional)
+            nav_msgs::Odometry odom;
+            odom.header.stamp=points_msg->header.stamp;
+            odom.header.frame_id=map_tf;
+            odom.child_frame_id=base_lidar_tf;
+            odom.pose.pose.position.x=transform(0,3);
+            odom.pose.pose.position.y=transform(1,3);
+            odom.pose.pose.position.z=transform(2,3);
+            Eigen::Quaternionf q = rot2quat(transform);
+            odom.pose.pose.orientation.x=q.x();
+            odom.pose.pose.orientation.y=q.y();
+            odom.pose.pose.orientation.z=q.z();
+            odom.pose.pose.orientation.w=q.w();
+            odom_pub.publish(odom);
 
             //publish cloud (optional)
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr coloredCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -154,7 +167,7 @@ namespace rt_localization_ns{
                 coloredCloud->points[i].g=255;
             }
             pcl_conversions::toPCL(points_msg->header,coloredCloud->header);
-            coloredCloud->header.frame_id = "map";
+            coloredCloud->header.frame_id = map_tf;
             curr_pointcloud_pub.publish(coloredCloud);
 
 
@@ -214,9 +227,13 @@ namespace rt_localization_ns{
         ros::Subscriber odom_suber;
         ros::Subscriber points_suber;
         ros::Subscriber localmap_suber;
-//    ros::Publisher odom_pub;
+        ros::Publisher odom_pub;
         ros::Timer timer;
         tf::TransformBroadcaster transformBroadcaster;
+        //tf
+        string map_tf;
+        string base_lidar_tf;
+
         // clouds
         pcl::PointCloud<pcl::PointXYZ>::Ptr localmap_cloud;
 

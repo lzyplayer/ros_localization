@@ -43,6 +43,8 @@ namespace globalmap_ns {
             int mapUpdateTime =private_nh.param<int>("mapUpdateTime", 8);
             auto downsample_resolution = private_nh.param<float>("downsample_resolution", 0.05f);
             std::string globalmap_pcd = private_nh.param<std::string>("global_map_pcd_path", "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd");
+            map_tf = private_nh.param<std::string>("map_tf", "map");
+            base_lidar_tf = private_nh.param<std::string>("base_lidar_tf", "velodyne");
             NODELET_INFO("radius: %f",radius);
             NODELET_INFO("%s",globalmap_pcd.c_str());
             /**initial pose**/
@@ -50,7 +52,7 @@ namespace globalmap_ns {
             curr_pose->pose.position.x= private_nh.param<float>("init_x", 0.0f);
             curr_pose->pose.position.y= private_nh.param<float>("init_y", 0.0f);
             curr_pose->pose.position.z= 0.0f;
-            Eigen::Quaternionf quaternionf=euler2quat(0,0,private_nh.param<double>("init_raw", 0));
+            Eigen::Quaternionf quaternionf=euler2quat(0,0,private_nh.param<double>("init_yaw", 0));
             curr_pose->pose.orientation.x=quaternionf.x();
             curr_pose->pose.orientation.y=quaternionf.y();
             curr_pose->pose.orientation.z=quaternionf.z();
@@ -90,7 +92,7 @@ namespace globalmap_ns {
         void pose_callback(const ros::TimerEvent& event){
             tf::StampedTransform transform;
             try{
-                listener.lookupTransform("/map", "/velodyne",ros::Time(0), transform);
+                listener.lookupTransform(map_tf, base_lidar_tf,ros::Time(0), transform);
             }
             catch (tf::TransformException &ex) {
                 ROS_ERROR("%s",ex.what());
@@ -151,6 +153,9 @@ namespace globalmap_ns {
         ros::Publisher localmap_pub;
         ros::Publisher globalmap_pub;
         tf::TransformListener listener;
+        //tf
+        string map_tf;
+        string base_lidar_tf;
         // parameter
         geometry_msgs::PoseStampedPtr curr_pose;
         pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;

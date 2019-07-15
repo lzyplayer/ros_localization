@@ -28,6 +28,12 @@ Quaternionf euler2quat(const float xr_pi,const float yp_pi,const float zy_pi){
     return q;
 }
 
+Quaternionf rot2quat(const Eigen::Matrix4f& pose){
+    Eigen::Quaternionf quat(pose.block<3,3>(0, 0));
+    quat.normalize();
+    return quat;
+}
+
 Vector3f quat2euler(const Quaternionf& quaternionf){
     return quaternionf.toRotationMatrix().eulerAngles(0,1,2);
 }

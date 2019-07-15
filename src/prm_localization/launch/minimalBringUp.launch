@@ -1,30 +1,47 @@
 <?xml version="1.0"?>
 <launch>
-<!--node-->
+<!--argument-->
+    <arg name="points_topic" default="/velodyne_points" />
+    <arg name="map_tf" default="map" />
+    <arg name="base_lidar_tf" default="velodyne" />
+    <arg name="downsample_resolution" default="0.05" />
+    <arg name="init_x" default="0.0" />
+    <arg name="init_y" default="0.0" />
+    <arg name="init_yaw" default="0.0" />
+    <arg name="trim_low" default="0.0" />
+    <arg name="trim_high" default="4.0" />
+    <arg name="radius" default="40.0" />
+    <arg name="mapUpdateTime" default="8" />
+    <arg name="global_map_pcd_path" default="/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd" />
 
 <!--manager-->
     <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>
 <!--nodelet-->
 <!-- same meaning param filed in two nodes must have same values-->
     <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="load prm_localization/RealTime_Localization manager">
-        <param name="trim_low" value="0.0" />
-        <param name="trim_high" value="4.0" />
-        <param name="init_x" value="0.0" />
-        <param name="init_y" value="0.0" />
-        <param name="init_raw" value="0.0" />
-        <param name="icpMaximumIterations" value="10" />
-        <param name="icpRANSACOutlierRejectionThreshold" value="0.04" />
-        <param name="icpTransformationEpsilon" value="1e-7" />
-        <param name="downSampleSize" value="0.05" />
+        <remap from="/velodyne_points" to="$(arg points_topic)" />
+        <param name="trim_low" value="$(arg trim_low)" />
+        <param name="trim_high" value="$(arg trim_high)" />
+        <param name="init_x" value="$(arg init_x)" />
+        <param name="init_y" value="$(arg init_y)" />
+        <param name="init_yaw" value="$(arg init_yaw)" />
+<!--        <param name="icpMaximumIterations" value="10" />-->
+<!--        <param name="icpRANSACOutlierRejectionThreshold" value="0.04" />-->
+<!--        <param name="icpTransformationEpsilon" value="1e-7" />-->
+        <param name="map_tf" value="$(arg map_tf)" />
+        <param name="base_lidar_tf" value="$(arg base_lidar_tf)" />
+        <param name="downSampleSize" value="$(arg downsample_resolution)"  />
     </node>
     <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager">
-        <param name="downsample_resolution" value="0.05" />
-        <param name="init_x" value="0.0" />
-        <param name="init_y" value="0.0" />
-        <param name="init_raw" value="0.0" />
-        <param name="radius" value="40.0" />
-        <param name="mapUpdateTime" value="8" />
-        <param name="global_map_pcd_path" value="/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd" />
+        <param name="downsample_resolution" value="$(arg downsample_resolution)" />
+        <param name="map_tf" value="$(arg map_tf)" />
+        <param name="base_lidar_tf" value="$(arg base_lidar_tf)" />
+        <param name="init_x" value="$(arg init_x)" />
+        <param name="init_y" value="$(arg init_y)" />
+        <param name="init_yaw" value="$(arg init_yaw)" />
+        <param name="radius" value="$(arg radius)" />
+        <param name="mapUpdateTime" value="$(arg mapUpdateTime)" />
+        <param name="global_map_pcd_path" value="$(arg global_map_pcd_path)" />
     </node>
 
 </launch>
