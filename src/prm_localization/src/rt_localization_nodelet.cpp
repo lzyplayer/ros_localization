@@ -83,10 +83,12 @@ namespace rt_localization_ns{
 //            ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
 //            registration = ndt;
             //registration-icp
-            registration.setMaximumIterations(icpMaximumIterations);
-            registration.setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
-            registration.setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
-            registration.setTransformationEpsilon(icpTransformationEpsilon);
+            pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>::Ptr regis (new pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>());
+            registration = regis;
+            registration->setMaximumIterations(icpMaximumIterations);
+            registration->setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
+            registration->setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
+            registration->setTransformationEpsilon(icpTransformationEpsilon);
 //        registration.set
             /**sub and pub**/
 //            odom_pub = nh.advertise<nav_msgs::Odometry>(map_tf,50);
@@ -149,11 +151,14 @@ namespace rt_localization_ns{
             odom.pose.pose.orientation.w=q.w();
             odom_pub.publish(odom);
 
-            //publish cloud (optional)
+            //publish cloud raw (optional)
             pcl::PointCloud<pcl::PointXYZ>::Ptr transformedCloud (new pcl::PointCloud<pcl::PointXYZ>());
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr coloredCloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
             pcl::PointCloud<pcl::RGB>::Ptr color (new pcl::PointCloud<pcl::RGB>());
+            //raw cloud
             pcl::transformPointCloud(*curr_cloud,*transformedCloud,transform);
+            //process cloud
+//            pcl::transformPointCloud(*flat_cloud,*transformedCloud,transform);
             color->width = transformedCloud->width;
             color->height = 1;//result_cloud.height
             color->points.resize(color->width*color->height);
@@ -164,9 +169,11 @@ namespace rt_localization_ns{
             }
             pcl::concatenateFields(*transformedCloud,*color,*coloredCloud);
 
+
             pcl_conversions::toPCL(points_msg->header,coloredCloud->header);
             coloredCloud->header.frame_id = map_tf;
             curr_pointcloud_pub.publish(coloredCloud);
+
 
 
 
@@ -204,17 +211,17 @@ namespace rt_localization_ns{
 
         Eigen::Matrix4f pc_register(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& curr_cloud,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& local_map,const Eigen::Matrix4f& initial_matrix){
             //registration
-            registration.setInputSource(curr_cloud);
-            registration.setInputTarget(local_map);
+            registration->setInputSource(curr_cloud);
+            registration->setInputTarget(local_map);
             pcl::PointCloud<pcl::PointXYZ> result_cloud ;
             //registration start
             clock_t start = clock();
-            registration.align(result_cloud,curr_pose);//,curr_pose
+            registration->align(result_cloud,curr_pose);//,curr_pose
             clock_t end = clock();
             NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
 //            NODELET_INFO("fitness score = %f ",registration.getFitnessScore());
 //            NODELET_INFO(" ");
-            return registration.getFinalTransformation();
+            return registration->getFinalTransformation();
 //        Vector3f euler = rot2euler(transform.block(0,0,3,3));
 //        NODELET_INFO("x = %f, y = %f, theta = %f ",transform(0,3),transform(1,3),euler(2));
         }
@@ -250,7 +257,7 @@ namespace rt_localization_ns{
 
         // utility
 //        pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration;
-        pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> registration;
+        pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration;
         pcl::VoxelGrid<pcl::PointXYZ> downSampler;
         std::mutex curr_pose_mutex;
         // time log

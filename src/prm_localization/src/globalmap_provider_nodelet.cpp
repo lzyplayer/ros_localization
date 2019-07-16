@@ -137,7 +137,7 @@ namespace globalmap_ns {
                     trimmed_cloud->points[i].r =150;
                 }
             }
-            trimmed_cloud->header.frame_id="map";
+            trimmed_cloud->header.frame_id=map_tf;
             pcl_conversions::toPCL(curr_pose->header.stamp, trimmed_cloud->header.stamp);
             localmap_pub.publish(trimmed_cloud);
             NODELET_INFO(" local map updated");
