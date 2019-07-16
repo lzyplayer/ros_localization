@@ -14,7 +14,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/visualization/cloud_viewer.h>
+//#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/pcd_io.h>
 //eigen
 #include <Eigen/Dense>
@@ -25,55 +25,81 @@
 #include <ctime>
 using namespace std;
 
-
+using PointT = pcl::PointXYZ;
 int main(int argc, char *argv[]) {
-    std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
-    std::string currmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYu1.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
+    /**learn copy_if back insert**/
+        std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
+        pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
+        pcl::io::loadPCDFile(globalmap_pcd, *cloud);
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr full_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr curr_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<PointT>::Ptr filtered(new pcl::PointCloud<PointT>());
+        filtered->reserve(cloud->size());
 
-    pcl::io::loadPCDFile(globalmap_pcd, *full_cloud);
-    full_cloud->header.frame_id = "map";
-    pcl::io::loadPCDFile(currmap_pcd, *curr_cloud);
-    curr_cloud->header.frame_id = "map";
+        std::copy_if(cloud->begin(), cloud->end(), std::back_inserter(filtered->points),
+                     [&](const PointT& p) {
+                         double d = p.getVector3fMap().norm();
+                         return d > 0.1 && d < 2;
+                     }
+        );
 
-    clock_t init = clock();
+        filtered->width = filtered->size();
+        filtered->height = 1;
+        filtered->is_dense = false;
 
-    pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-    icp.setInputTarget(full_cloud);
-    icp.setInputSource(curr_cloud);
-    //para
-    icp.setMaximumIterations(50);
-    icp.setTransformationEpsilon(1e-7);
-    icp.setRANSACOutlierRejectionThreshold(0.04);
-    icp.setMaxCorrespondenceDistance(4);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr result (new pcl::PointCloud<pcl::PointXYZRGB>);
-    /** analyse RANSACOutlierRejectionThreshold and MaxCorrespondenceDistance**/
-    for (double i = 0.01; i <0.15 ; i+=0.01) {
-        icp.setRANSACOutlierRejectionThreshold(i);
-        icp.setMaxCorrespondenceDistance(i*100);
-        clock_t start = clock();
-        icp.align(*result);
-        clock_t end = clock();
-        cout<<"registration in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
-        cout<<"with"<< "registration.setRANSACOutlierRejectionThreshold() = "<< i <<endl;
-        cout<<"registration.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
-        cout<<endl;
+        filtered->header = cloud->header;
 
-    }
-    /** analyse TransformationEpsilon**/
-    for (double i = 1e-11; i <=1e-7 ; i*=10) {
-        icp.setTransformationEpsilon(i);
-        clock_t start = clock();
-        icp.align(*result);
-        clock_t end = clock();
-        cout<<"registration in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
-        cout<<"with"<< "TransformationEpsilon() = "<< i <<endl;
-        cout<<"registration.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
-        cout<<endl;
 
-    }
+
+    /**analyse parameter of icp**/
+//    std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
+//    std::string currmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYu1.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
+//
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr full_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr curr_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+//
+//    pcl::io::loadPCDFile(globalmap_pcd, *full_cloud);
+//    full_cloud->header.frame_id = "map";
+//    pcl::io::loadPCDFile(currmap_pcd, *curr_cloud);
+//    curr_cloud->header.frame_id = "map";
+//
+//    clock_t init = clock();
+//
+//    pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+//    icp.setInputTarget(full_cloud);
+//    icp.setInputSource(curr_cloud);
+//    //para
+//    icp.setMaximumIterations(50);
+//    icp.setTransformationEpsilon(1e-7);
+//    icp.setRANSACOutlierRejectionThreshold(0.04);
+//    icp.setMaxCorrespondenceDistance(4);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr result (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    /** analyse RANSACOutlierRejectionThreshold and MaxCorrespondenceDistance**/
+//    for (double i = 0.01; i <0.15 ; i+=0.01) {
+//        icp.setRANSACOutlierRejectionThreshold(i);
+//        icp.setMaxCorrespondenceDistance(i*100);
+//        clock_t start = clock();
+//        icp.align(*result);
+//        clock_t end = clock();
+//        cout<<"registration in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
+//        cout<<"with"<< "registration.setRANSACOutlierRejectionThreshold() = "<< i <<endl;
+//        cout<<"registration.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
+//        cout<<endl;
+//
+//    }
+//    /** analyse TransformationEpsilon**/
+//    for (double i = 1e-11; i <=1e-7 ; i*=10) {
+//        icp.setTransformationEpsilon(i);
+//        clock_t start = clock();
+//        icp.align(*result);
+//        clock_t end = clock();
+//        cout<<"registration in "<< (double)(end  - start) / CLOCKS_PER_SEC << "second" << endl;
+//        cout<<"with"<< "TransformationEpsilon() = "<< i <<endl;
+//        cout<<"registration.getFitnessScore() = "<<icp.getFitnessScore()<<endl;
+//        cout<<endl;
+//
+//    }
+
+/**pcl_viewer**/
 //    clock_t start = clock();
 
 //    registration.align(*result);

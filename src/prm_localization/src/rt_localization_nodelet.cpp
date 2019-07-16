@@ -57,6 +57,8 @@ namespace rt_localization_ns{
             /**parameter**/
             trim_low = private_nh.param<float>("trim_low", 0.0f);
             trim_high = private_nh.param<float>("trim_high", 4.0f);
+            farPointThreshold = private_nh.param<float>("farPointThreshold", 30.0f);
+            nearPointThreshold = private_nh.param<float>("nearPointThreshold", 1.4f); //pioneer carself
             auto init_x = private_nh.param<float>("init_x", 0.0f);
             auto init_y = private_nh.param<float>("init_y", 0.0f);
             auto init_yaw = private_nh.param<double>("init_yaw", 0.0);
@@ -114,7 +116,7 @@ namespace rt_localization_ns{
             downSampler.setInputCloud(curr_cloud);
             downSampler.filter(*filtered_cloud);
             //trim and 2d
-            auto flat_cloud  = trimInputCloud(filtered_cloud, trim_low, trim_high);
+            auto flat_cloud  = trimInputCloud(filtered_cloud,nearPointThreshold,farPointThreshold, trim_low, trim_high);
             //pc register
             Matrix4f transform = pc_register(flat_cloud,localmap_cloud,curr_pose);
             {
@@ -184,21 +186,18 @@ namespace rt_localization_ns{
         }
 
         pcl::PointCloud<pcl::PointXYZ>::ConstPtr trimInputCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,
-                                                                const float low, const float high) const {
+                                                                const float disNear, const float disFar, const float low, const float high) const {
+
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTrimmed (new pcl::PointCloud<pcl::PointXYZ>());
-            for(size_t i=0;i<cloud->points.size();++i){
-                if (cloud->points[i].z<high && cloud->points[i].z>low) {
-                    pcl::PointXYZ currPoint;
-                    currPoint.x =cloud->points[i].x;
-                    currPoint.y =cloud->points[i].y;
-                    //2d
-//                currPoint.z =0;
-                    //3d
-                    currPoint.z =cloud->points[i].z;
-                    cloudTrimmed->points.push_back(currPoint);
-                }
-            }
+            cloudTrimmed->reserve(cloud->size());
+            std::copy_if(cloud->begin(),cloud->end(),std::back_inserter(cloudTrimmed->points),
+                    [&](const pcl::PointXYZ& p){
+                        double d = p.getVector3fMap().norm();
+                        return d > disNear && d < disFar && p.z > low && p.z <high;
+                        }
+            );
             cloudTrimmed->width = cloudTrimmed->points.size();
+            cloudTrimmed->height = 1;
             cloudTrimmed->header = cloud->header;
             return cloudTrimmed;
         }
@@ -229,6 +228,8 @@ namespace rt_localization_ns{
         // para
         float trim_low;
         float trim_high;
+        float farPointThreshold;
+        float nearPointThreshold;
         Eigen::Matrix4f curr_pose;
         ros::Time curr_pose_stamp;
         // suber and puber
@@ -267,27 +268,3 @@ PLUGINLIB_EXPORT_CLASS(rt_localization_ns::RealTime_Localization, nodelet::Nodel
 //                NODELET_INFO("sec:%i,nsec:%i",points_msg->header.stamp.sec,points_msg->header.stamp.nsec);
 //                NODELET_INFO("sec:%i,nsec:%i",curr_pose_stamp.sec,curr_pose_stamp.nsec);
 
-
-//
-//int main(int argc, char *argv[])
-//{
-//
-//    //test code
-////    pcl::PointCloud<pcl::PointXYZ>::Ptr mycloud (new pcl::PointCloud<pcl::PointXYZ>());
-////    pcl::PointXYZ pointXy;
-////    pointXy.x=2;
-////    pointXy.y=2;
-////
-////    mycloud->points.push_back(pointXy);
-////    //
-//
-//
-//
-//    ros::init(argc, argv, "rt_locator");
-//    RealTime_Localization realtime_localization ;//(new RealTime_Localization())
-//    realtime_localization.onInit();
-//
-//    ros::spin();
-//
-//    return 0;
-//}
