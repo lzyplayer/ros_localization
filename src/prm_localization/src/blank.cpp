@@ -31,40 +31,40 @@ using PointT = pcl::PointXYZ;
 
 int main(int argc, char *argv[]) {
     /**nvidva pcprocess**/
-    void initializePointCloudProcessing(){
-        // allocate point cloud buffer to store accumulated points
-        gAccumulatedPoints.type     = DW_MEMORY_TYPE_CUDA;
-        gAccumulatedPoints.capacity = gLidarProperties.pointsPerSpin;
-        dwPointCloud_createBuffer(&gAccumulatedPoints);
+    // void initializePointCloudProcessing(){
+    //     // allocate point cloud buffer to store accumulated points
+    //     gAccumulatedPoints.type     = DW_MEMORY_TYPE_CUDA;
+    //     gAccumulatedPoints.capacity = gLidarProperties.pointsPerSpin;
+    //     dwPointCloud_createBuffer(&gAccumulatedPoints);
 
-        // initialize DriveWorks PointCloudAccumulator module which will accumulate individual lidar packets to a point cloud
-        dwPointCloudAccumulatorParams accumParams{};
-        accumParams.egomotion                = gEgomotion;
-        accumParams.memoryType               = DW_MEMORY_TYPE_CUDA;
-        accumParams.enableMotionCompensation = true;
-        dwPointCloudAccumulator_initialize(&gAccumulator, &accumParams, &gLidarProperties, gContext);
+    //     // initialize DriveWorks PointCloudAccumulator module which will accumulate individual lidar packets to a point cloud
+    //     dwPointCloudAccumulatorParams accumParams{};
+    //     accumParams.egomotion                = gEgomotion;
+    //     accumParams.memoryType               = DW_MEMORY_TYPE_CUDA;
+    //     accumParams.enableMotionCompensation = true;
+    //     dwPointCloudAccumulator_initialize(&gAccumulator, &accumParams, &gLidarProperties, gContext);
 
-        // allocate point cloud buffer to store stitched points
-        gStitchedPoints.type     = DW_MEMORY_TYPE_CUDA;
-        gStitchedPoints.capacity = getNumberOfPointsPerSpinFromAllLidars();
-        dwPointCloud_createBuffer(&gStitchedPoints);
+    //     // allocate point cloud buffer to store stitched points
+    //     gStitchedPoints.type     = DW_MEMORY_TYPE_CUDA;
+    //     gStitchedPoints.capacity = getNumberOfPointsPerSpinFromAllLidars();
+    //     dwPointCloud_createBuffer(&gStitchedPoints);
 
-        // initialize DriveWorks PointCloudStitcher which will combine multiple point clouds into one
-        dwPointCloudStitcher_initialize(&gStitcher, gContext);
+    //     // initialize DriveWorks PointCloudStitcher which will combine multiple point clouds into one
+    //     dwPointCloudStitcher_initialize(&gStitcher, gContext);
 
-        // allocate buffer to generate depthmap representation from lidar points
-        gDepthMap.type     = DW_MEMORY_TYPE_CUDA;
-        gDepthMap.capacity = getDepthmapWidth() * getDepthmapHeight();
-        dwPointCloud_createBuffer(&gDepthMap);
+    //     // allocate buffer to generate depthmap representation from lidar points
+    //     gDepthMap.type     = DW_MEMORY_TYPE_CUDA;
+    //     gDepthMap.capacity = getDepthmapWidth() * getDepthmapHeight();
+    //     dwPointCloud_createBuffer(&gDepthMap);
 
-        // create RangeImageCreator which will generate 2.5D depthmap as well as range image representation from unorganized accumulated points
-        dwPointCloudRangeImageCreator_initialize(&gRangeImageCreator, &gRangeImageCreatorProperties, gContext);
+    //     // create RangeImageCreator which will generate 2.5D depthmap as well as range image representation from unorganized accumulated points
+    //     dwPointCloudRangeImageCreator_initialize(&gRangeImageCreator, &gRangeImageCreatorProperties, gContext);
 
-        // initialize DriveWorks ICP module
-        dwPointCloudICPParams icpParams{};
-        icpParams.icpType  = DW_POINT_CLOUD_ICP_TYPE_DEPTH_MAP; // optimized ICP for 2.5D depthmap representation of a point cloud
-        dwPointCloudICP_initialize(&gICP, &icpParams, gContext);
-    }
+    //     // initialize DriveWorks ICP module
+    //     dwPointCloudICPParams icpParams{};
+    //     icpParams.icpType  = DW_POINT_CLOUD_ICP_TYPE_DEPTH_MAP; // optimized ICP for 2.5D depthmap representation of a point cloud
+    //     dwPointCloudICP_initialize(&gICP, &icpParams, gContext);
+    // }
     /**learn copy_if back insert**/
 //        std::string globalmap_pcd = "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd";//private_nh.param<std::string>("globalmap_pcd", "");
 //        pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
