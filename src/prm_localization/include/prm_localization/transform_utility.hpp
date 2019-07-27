@@ -4,6 +4,7 @@
 
 #include <Eigen/Dense>
 #include <ros/ros.h>
+#include <geometry_msgs/TransformStamped.h>
 
 /**function for conversation**/
 
@@ -36,6 +37,26 @@ Quaternionf rot2quat(const Eigen::Matrix4f& pose){
 
 Vector3f quat2euler(const Quaternionf& quaternionf){
     return quaternionf.toRotationMatrix().eulerAngles(0,1,2);
+}
+
+Matrix3f quat2rot(const Quaternionf& quaternionf){
+    return quaternionf.toRotationMatrix();
+}
+
+nav_msgs::Odometry rotm2odometry(const Eigen::Matrix4f& pose ,const ros::Time& stamp,const std::string& frame_id, const std::string& child_frame_id){
+    Quaternionf q = rot2quat(pose.block(0,0,3,3));
+    nav_msgs::Odometry odometry;
+    odometry.header.frame_id=frame_id;
+    odometry.child_frame_id = child_frame_id;
+    odometry.header.stamp = stamp;
+    odometry.pose.pose.position.x = pose(0,3);
+    odometry.pose.pose.position.y = pose(1,3);
+    odometry.pose.pose.position.z = pose(2,3);
+    odometry.pose.pose.orientation.x=q.x();
+    odometry.pose.pose.orientation.y=q.y();
+    odometry.pose.pose.orientation.z=q.z();
+    odometry.pose.pose.orientation.w=q.w();
+    return odometry;
 }
 
 

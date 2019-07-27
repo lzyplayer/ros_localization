@@ -6,6 +6,7 @@
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose2D.h>
+#include <nav_msgs/Odometry.h>
 // pcl
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
@@ -23,6 +24,9 @@
 //#include <pluginlib/class_list_macros.h>
 //cpp
 #include <ctime>
+#include <boost/circular_buffer.hpp>
+//user
+#include <prm_localization/transform_utility.hpp>
 using namespace std;
 
 using PointT = pcl::PointXYZ;
@@ -30,6 +34,82 @@ using PointT = pcl::PointXYZ;
 
 
 int main(int argc, char *argv[]) {
+    /**send odom**/
+    ros::init(argc, argv, "send_odom");
+    ros::NodeHandle nh;
+    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/odom",50);
+    ros::Publisher get_pmsg_pub = nh.advertise<nav_msgs::Odometry>("/stamp",5);
+
+    nav_msgs::Odometry odometry;
+    get_pmsg_pub.publish(odometry);
+    sleep(3);
+    odom_pub.publish(odometry);
+
+//    /**hello iterator**/
+//    boost::circular_buffer<int> sham;
+//    sham.set_capacity(4);
+////    nav_msgs::OdometryPtr odom (new nav_msgs::Odometry());
+//    size_t  a = sham.size();
+//    sham.push_back(1);
+//    sham.push_back(2);
+//    sham.push_back(3);
+//    sham.push_back(4);
+//    sham.push_back(5);
+//    size_t b = sham.size();
+//    for (boost::circular_buffer<int>::const_iterator i = sham.end()-1;i!=sham.begin();i--){
+//        cout<<*i<<endl;
+//    }
+
+    //    boost::circular_buffer<nav_msgs::OdometryConstPtr> sham;
+//    sham.set_capacity(4);
+////    nav_msgs::OdometryPtr odom (new nav_msgs::Odometry());
+//    size_t  a = sham.size();
+//    sham.push_back(odom);
+//    sham.push_back(odom);
+//    size_t b = sham.size();
+//    for (boost::circular_buffer<nav_msgs::OdometryConstPtr>::const_iterator i = sham.end()-1;i!=sham.begin();i--){
+//        nav_msgs::Odometry odometry = **i;
+////        NODELET_INFO("check a odom_msg");
+//        if(odometry.header.stamp <= odometry.header.stamp){
+//            Quaternionf q(odometry.pose.pose.orientation.w,odometry.pose.pose.orientation.x,odometry.pose.pose.orientation.y,odometry.pose.pose.orientation.z);
+//            Matrix4f odom_pose;
+//            odom_pose.block(0,0,3,3)=quat2rot(q);
+//            odom_pose(0,3)=odometry.pose.pose.position.x;
+//            odom_pose(1,3)=odometry.pose.pose.position.y;
+//            odom_pose(2,3)=odometry.pose.pose.position.z;
+//            break;
+//        }
+//    }
+
+    /**do a rotm**/
+    //right
+//    Eigen::Quaternionf quaternionfr;
+//    Eigen::Matrix4f rotmr;
+//    quaternionfr.x()=0.240932;
+//    quaternionfr.y()=0.249054;
+//    quaternionfr.z()=-0.671951;
+//    quaternionfr.w()=0.654527;
+//    rotmr.block(0,0,3,3) = quat2rot(quaternionfr);
+//    rotmr(0,3)=-0.342517;
+//    rotmr(1,3)=-0.759176;
+//    rotmr(2,3)=-0.323078;
+//    rotmr(3,0)=0;
+//    rotmr(3,2)=0;
+//    //left
+//    Eigen::Quaternionf quaternionfleft;
+//    Eigen::Matrix4f rotml;
+//    rotml.setIdentity();
+//    quaternionfleft.x()=-0.259988;
+//    quaternionfleft.y()=0.247313;
+//    quaternionfleft.z()=0.617506;
+//    quaternionfleft.w()=0.69995;
+//    rotml.block(0,0,3,3) = quat2rot( quaternionfleft);
+//    rotml(0,3)=-0.321385;
+//    rotml(1,3)=0.678507;
+//    rotml(2,3)=-0.354922;
+//
+//    cout<<"rotmr"<<endl<<rotmr<<endl;
+//    cout<<"rotml"<<endl<<rotml<<endl;
     /**nvidva pcprocess**/
     // void initializePointCloudProcessing(){
     //     // allocate point cloud buffer to store accumulated points

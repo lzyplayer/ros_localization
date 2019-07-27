@@ -17,10 +17,26 @@ include_directories(
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-
 message(STATUS "PCL_INCLUDE_DIRS:" ${PCL_INCLUDE_DIRS})
 message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
 message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})
+
+#nvidva
+#message(STATUS "CMAKE_SOURCE_DIR:" ${CMAKE_SOURCE_DIR})
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/dw_ros/cmake/Modules/")
+#find_package(CUDA REQUIRED)
+#find_package(Threads REQUIRED)
+#find_package(GLEW REQUIRED)
+#find_package(Driveworks REQUIRED)
+
+#set(Driveworks_INCLUDE_DIRS ${Driveworks_INCLUDE_DIRS} "/usr/local/driveworks/include/")
+#set(CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} "/usr/local/cuda/include")
+#set(Driveworks_LIBRARY_DIRS ${Driveworks_LIBRARY_DIRS} "/usr/local/driveworks/lib/")
+#include_directories(
+#        ${Driveworks_INCLUDE_DIRS}
+#        ${CUDA_INCLUDE_DIRS}
+#)
+#link_directories(${Driveworks_LIBRARY_DIRS})
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -51,11 +67,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 #nodelets
-add_library(prm_localization_nodelet src/prm_localization_nodelet.cpp)
-target_link_libraries(prm_localization_nodelet
-        ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES}
-        )
+
 
 add_library(globalmap_provider_nodelet src/globalmap_provider_nodelet.cpp)
 target_link_libraries(globalmap_provider_nodelet
@@ -68,23 +80,7 @@ target_link_libraries(rt_localization_nodelet
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
         )
-#
-#add_executable(prm_localization
-#        src/prm_localization_nodelet.cpp
-#        )
-#add_dependencies(prm_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(prm_localization
-#  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#)
-#add_executable(globalmap_provider
-#        src/globalmap_provider_nodelet.cpp
-#        )
-#add_dependencies(globalmap_provider ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(globalmap_provider
-#        ${catkin_LIBRARIES}
-#        ${PCL_LIBRARIES}
-#        )
+#node
 add_executable(blank
         src/blank.cpp
         )
@@ -93,3 +89,22 @@ target_link_libraries(blank
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
         )
+add_executable(rt_localization_debug
+        src/rt_localization_debug.cpp
+        )
+add_dependencies(rt_localization_debug ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(rt_localization_debug
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES}
+        )
+
+#add_executable(hello_nvidva
+#        src/hello_nvidva.cpp
+#        )
+#add_dependencies(hello_nvidva ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(hello_nvidva
+#        ${catkin_LIBRARIES}
+#        ${PCL_LIBRARIES}
+#        ${Driveworks_LIBRARIES}
+#        )
+
