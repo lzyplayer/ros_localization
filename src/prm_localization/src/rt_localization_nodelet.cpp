@@ -74,6 +74,7 @@ namespace rt_localization_ns{
             imu_odom_data.set_capacity(512);
             velosity_x=velosity_y=velosity_yaw=0;
 
+
             //init_pose
             curr_pose.setIdentity(4,4);
             curr_pose.block(0,0,3,3) = euler2rot(0,0,init_yaw);
@@ -101,7 +102,7 @@ namespace rt_localization_ns{
             get_pmsg_pub = nh.advertise<nav_msgs::Odometry>("/stamp",5);
             points_suber = nh.subscribe("/velodyne_points",1,&RealTime_Localization::points_callback,this);
             localmap_suber =  mt_nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
-            imu_odom_suber = mt_nh.subscribe("/imu_odometry",512,&RealTime_Localization::imu_callback,this);
+            imu_odom_suber = mt_nh.subscribe("/akermanslamlidarnode",512,&RealTime_Localization::imu_callback,this);
             curr_pointcloud_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
 ////temp add
             Regis_input_odom = nh.advertise<nav_msgs::Odometry>("/regis_in_odom",50);
@@ -133,8 +134,29 @@ namespace rt_localization_ns{
             //trim and 2d
             auto flat_cloud  = trimInputCloud(filtered_cloud,nearPointThreshold,farPointThreshold, trim_low, trim_high);
 
+            //select closest imu odom pose (bad performance)
+            Matrix4f odom_pose;
+            if (imu_odom_data.size()!=0)
+            {
+                for (boost::circular_buffer<nav_msgs::OdometryConstPtr>::const_iterator i = imu_odom_data.end() - 1;
+                     i != imu_odom_data.begin(); i--) {
+                    nav_msgs::Odometry odometry = **i;
+                    NODELET_INFO("pass a odom");
+                    if (odometry.header.stamp < points_msg->header.stamp) {
+                        Quaternionf q(odometry.pose.pose.orientation.w, odometry.pose.pose.orientation.x,
+                                      odometry.pose.pose.orientation.y, odometry.pose.pose.orientation.z);
+                        odom_pose.block(0, 0, 3, 3) = quat2rot(q);
+                        odom_pose(0, 3) = odometry.pose.pose.position.x;
+                        odom_pose(1, 3) = odometry.pose.pose.position.y;
+                        odom_pose(2, 3) = curr_pose(2,3);
+                        odometry.pose.pose.position.z=curr_pose(2,3);
+                        Regis_input_odom.publish(odometry);
+                        curr_pose = odom_pose;
+                        break;
+                    }
+                }
 
-
+            }
 
 
             //pc register  (with predict pose by former movement)
@@ -143,11 +165,11 @@ namespace rt_localization_ns{
 //            cout<<"predict_pose:"<<endl<<predict_pose<<endl;
             nav_msgs::Odometry odometry  = rotm2odometry(predict_pose,points_msg->header.stamp,map_tf,base_lidar_tf);
             Regis_input_odom.publish(odometry);
-            Matrix4f transform = pc_register(flat_cloud, localmap_cloud, predict_pose);
+            Matrix4f transform = pc_register(flat_cloud, localmap_cloud, curr_pose);//predict_pose
             update_velocity(curr_pose,transform,curr_pose_stamp,points_msg->header.stamp);
-            cout<<"velosity_x:\t"<<velosity_x<<endl;
-            cout<<"velosity_y:\t"<<velosity_y<<endl;
-            cout<<"velosity_yaw:\t"<<velosity_yaw<<endl;
+//            cout<<"velosity_x:\t"<<velosity_x<<endl;
+//            cout<<"velosity_y:\t"<<velosity_y<<endl;
+//            cout<<"velosity_yaw:\t"<<velosity_yaw<<endl;
             {
                 lock_guard<mutex> lockGuard(curr_pose_mutex);
                 if(points_msg->header.stamp>curr_pose_stamp){
@@ -226,6 +248,8 @@ namespace rt_localization_ns{
             Eigen::Vector3f original_oritetion = rot2euler(original_pose.block(0,0,3,3));
             Eigen::Vector3f registered_oritetion = rot2euler(registered_pose.block(0,0,3,3));
             double time_colleasep = (curr_time.toSec()-oringal_time.toSec());
+//            cout<<"yaw: \t"<<original_oritetion(2)<<endl;
+//            cout<<"yaw d:\t"<<registered_oritetion(2)-original_oritetion(2)<<endl;
             velosity_yaw = (registered_oritetion(2)-original_oritetion(2))/time_colleasep;
             velosity_x = (registered_pose(0,3)-original_pose(0,3))/time_colleasep;
             velosity_y = (registered_pose(1,3)-original_pose(1,3))/time_colleasep;
@@ -252,6 +276,7 @@ namespace rt_localization_ns{
             //registration start
             clock_t start = clock();
             registration->align(result_cloud,initial_matrix);//,curr_pose
+            cout<<"registration->getFitnessScore()\t"<<registration->getFitnessScore()<<endl;
             clock_t end = clock();
             NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
 //            NODELET_INFO("fitness score = %f ",registration.getFitnessScore());
@@ -324,26 +349,3 @@ PLUGINLIB_EXPORT_CLASS(rt_localization_ns::RealTime_Localization, nodelet::Nodel
 //            cout<<"calculate_pose: "<<endl<<transform<<endl;
 
 
-//select closest imu odom pose (bad performance)
-//            Matrix4f odom_pose;
-//            if (imu_odom_data.size()!=0)
-//            {
-//                for (boost::circular_buffer<nav_msgs::OdometryConstPtr>::const_iterator i = imu_odom_data.end() - 1;
-//                     i != imu_odom_data.begin(); i--) {
-//                    nav_msgs::Odometry odometry = **i;
-//                    NODELET_INFO("pass a odom");
-////                    if (odometry.header.stamp < points_msg->header.stamp) {
-//                        Quaternionf q(odometry.pose.pose.orientation.w, odometry.pose.pose.orientation.x,
-//                                      odometry.pose.pose.orientation.y, odometry.pose.pose.orientation.z);
-//                        odom_pose.block(0, 0, 3, 3) = quat2rot(q);
-//                        odom_pose(0, 3) = odometry.pose.pose.position.x;
-//                        odom_pose(1, 3) = odometry.pose.pose.position.y;
-//                        odom_pose(2, 3) = curr_pose(2,3);
-//                        odometry.pose.pose.position.z=curr_pose(2,3);
-//                        Regis_input_odom.publish(odometry);
-//                        curr_pose = odom_pose;
-//                        break;
-////                    }
-//                }
-//
-//            }
