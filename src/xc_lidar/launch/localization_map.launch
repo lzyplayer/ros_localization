@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="lidar_odometry" type="lidar_odom" name="lidarodom"/>      
+    <node pkg="lidar_odometry" type="map_filter" name="filter" output = "screen" />  
+</launch>
