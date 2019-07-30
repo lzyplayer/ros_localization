@@ -92,7 +92,9 @@ namespace globalmap_ns {
         void pose_callback(const ros::TimerEvent& event){
             tf::StampedTransform transform;
             try{
-                listener.lookupTransform(map_tf, base_lidar_tf,ros::Time(0), transform);
+                ros::Time now = ros::Time::now();
+                listener.waitForTransform(map_tf, base_lidar_tf,now, ros::Duration(5.0));
+                listener.lookupTransform(map_tf, base_lidar_tf,now, transform);
             }
             catch (tf::TransformException &ex) {
                 ROS_ERROR("%s",ex.what());

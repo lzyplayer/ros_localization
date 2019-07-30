@@ -13,13 +13,13 @@ using namespace Eigen;
 
 Matrix3f euler2rot(const float x_pi,const float y_pi,const float z_pi){
     Matrix3f m;
-    m = AngleAxisf(x_pi*M_PI, Vector3f::UnitX())
-        * AngleAxisf(y_pi*M_PI, Vector3f::UnitY())
-        * AngleAxisf(z_pi*M_PI, Vector3f::UnitZ());
+    m = AngleAxisf(z_pi, Vector3f::UnitZ())
+        * AngleAxisf(y_pi, Vector3f::UnitY())
+        * AngleAxisf(x_pi, Vector3f::UnitX());
     return m;
 }
 Vector3f rot2euler(const Matrix3f& m){
-    return m.eulerAngles(0,1,2);
+    return m.eulerAngles(2,1,0);
 }
 
 Quaternionf euler2quat(const float xr_pi,const float yp_pi,const float zy_pi){
@@ -45,7 +45,7 @@ Matrix3f quat2rot(const Quaternionf& quaternionf){
 }
 
 nav_msgs::Odometry rotm2odometry(const Eigen::Matrix4f& pose ,const ros::Time& stamp,const std::string& frame_id, const std::string& child_frame_id){
-    Quaternionf q = rot2quat(pose.block(0,0,3,3));
+    Quaternionf q = rot2quat(pose);
     nav_msgs::Odometry odometry;
     odometry.header.frame_id=frame_id;
     odometry.child_frame_id = child_frame_id;

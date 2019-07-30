@@ -13,7 +13,7 @@
     <arg name="trim_low" default="-1.8" />
     <arg name="trim_high" default="3" />
     <arg name="radius" default="30.0" />
-    <arg name="mapUpdateTime" default="2" />
+    <arg name="mapUpdateTime" default="5" />
     <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/catkin_ws/src/prm_localization/data/XJTU_underground_parkinglot.pcd" />
 <!--icp para-->
     <arg name="icpMaximumIterations" default="50" />
@@ -56,8 +56,8 @@
         <param name="global_map_pcd_path" value="$(arg global_map_pcd_path)" />
     </node>
 <!--    shen's node-->
-<!--    <node pkg="slamwithimu" type="slamimumode" name="mailun_node"/>-->
-        <node pkg="syq_ekf" type="akermanslamlidarnode" name="karman_node"/>
+    <node pkg="slamwithimu" type="slamimumode" name="mailun_node"/>
+<!--        <node pkg="syq_ekf" type="akermanslamlidarnode" name="karman_node"/>-->
 </launch>
 <!--        output="screen"-->
 <!--    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>-->

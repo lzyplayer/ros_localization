@@ -7,7 +7,7 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs rospy nodelet sensor_msgs pcl_ros pcl_msgs ndt_omp)
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs rospy nodelet sensor_msgs pcl_ros pcl_msgs ndt_omp )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
