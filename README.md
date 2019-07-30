@@ -2,7 +2,7 @@
 
 ------
 
-:)
+:)uhuhu
 
 2. set parameter in `minimalBringUp.launch`
 3. `roslaunch prm_localization minimalBringUp.launch `
