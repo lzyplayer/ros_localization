@@ -46,7 +46,6 @@ set(EIGEN_PACKAGE EIGEN3)
 
 catkin_package(
   CATKIN_DEPENDS std_msgs sensor_msgs message_runtime eigen_conversions
-  DEPENDS ${EIGEN_PACKAGE}
 )
 
 ###################################

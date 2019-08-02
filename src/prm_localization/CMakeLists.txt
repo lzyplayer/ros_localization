@@ -22,12 +22,12 @@ message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
 message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})
 
 #nvidva
-#message(STATUS "CMAKE_SOURCE_DIR:" ${CMAKE_SOURCE_DIR})
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/dw_ros/cmake/Modules/")
-#find_package(CUDA REQUIRED)
-#find_package(Threads REQUIRED)
-#find_package(GLEW REQUIRED)
-#find_package(Driveworks REQUIRED)
+message(STATUS "CMAKE_SOURCE_DIR:" ${CMAKE_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/prm_localization/cmake/Modules/")
+find_package(CUDA REQUIRED)
+find_package(Threads REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(Driveworks REQUIRED)
 
 #set(Driveworks_INCLUDE_DIRS ${Driveworks_INCLUDE_DIRS} "/usr/local/driveworks/include/")
 #set(CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} "/usr/local/cuda/include")
@@ -65,6 +65,8 @@ catkin_package(
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+    ${Driveworks_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS}
 )
 #nodelets
 
@@ -98,13 +100,13 @@ target_link_libraries(rt_localization_debug
         ${PCL_LIBRARIES}
         )
 
-#add_executable(hello_nvidva
-#        src/hello_nvidva.cpp
-#        )
-#add_dependencies(hello_nvidva ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(hello_nvidva
-#        ${catkin_LIBRARIES}
-#        ${PCL_LIBRARIES}
-#        ${Driveworks_LIBRARIES}
-#        )
+add_executable(hello_nvidva
+        src/hello_nvidva.cpp
+        )
+add_dependencies(hello_nvidva ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hello_nvidva
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES}
+        ${Driveworks_LIBRARIES}
+        )
 

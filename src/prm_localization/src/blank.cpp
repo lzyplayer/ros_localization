@@ -28,22 +28,34 @@
 //user
 #include <prm_localization/transform_utility.hpp>
 using namespace std;
-
+using namespace Eigen;
 using PointT = pcl::PointXYZ;
 
 
 
 int main(int argc, char *argv[]) {
-    /**send odom**/
-    ros::init(argc, argv, "send_odom");
-    ros::NodeHandle nh;
-    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/odom",50);
-    ros::Publisher get_pmsg_pub = nh.advertise<nav_msgs::Odometry>("/stamp",5);
+    /** eigen research**/
+    Matrix4f m4a ;
+    m4a.setRandom();
+    cout<<m4a(0)<<endl;
+    cout<<m4a(1)<<endl;
+    cout<<m4a(2)<<endl;
+    cout<<m4a(4)<<endl;
+    cout<<m4a(5)<<endl;
+    cout<<m4a(6)<<endl;
+    cout<<m4a(7)<<endl;
 
-    nav_msgs::Odometry odometry;
-    get_pmsg_pub.publish(odometry);
-    sleep(3);
-    odom_pub.publish(odometry);
+cout<<m4a<<endl;
+    /**send odom**/
+//    ros::init(argc, argv, "send_odom");
+//    ros::NodeHandle nh;
+//    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/odom",50);
+//    ros::Publisher get_pmsg_pub = nh.advertise<nav_msgs::Odometry>("/stamp",5);
+//
+//    nav_msgs::Odometry odometry;
+//    get_pmsg_pub.publish(odometry);
+//    sleep(3);
+//    odom_pub.publish(odometry);
 
 //    /**hello iterator**/
 //    boost::circular_buffer<int> sham;

@@ -45,7 +45,6 @@ catkin_package(
     tf2_geometry_msgs
     tf2_ros
     dbw_mkz_msgs
-  DEPENDS ${EIGEN_PACKAGE}
 )
 
 ###########
