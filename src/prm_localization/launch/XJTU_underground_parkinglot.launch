@@ -6,7 +6,7 @@
     <arg name="base_lidar_tf" default="base_foot" />
 <!--    <arg name="map_tf" default="map" />-->
 <!--    <arg name="base_lidar_tf" default="velodyne" />-->
-    <arg name="downsample_resolution" default="0.1" />
+
     <arg name="init_x" default="0.0" />
     <arg name="init_y" default="0.0" />
     <arg name="init_yaw" default="0.0" />
@@ -16,6 +16,8 @@
     <arg name="mapUpdateTime" default="5" />
     <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/catkin_ws/src/prm_localization/data/XJTU_underground_parkinglot.pcd" />
 <!--icp para-->
+    <arg name="use_GPU_ICP" default="false"/>
+    <arg name="downsample_resolution" default="0.1" />
     <arg name="icpMaximumIterations" default="50" />
     <arg name="icpRANSACOutlierRejectionThreshold" default="0.08" />
     <arg name="icpTransformationEpsilon" default="1e-3" />
@@ -32,6 +34,7 @@
         <remap from="/velodyne_points" to="$(arg points_topic)" />
         <param name="farPointThreshold" value="$(arg farPointThreshold)" />
         <param name="nearPointThreshold" value="$(arg nearPointThreshold)" />
+        <param name="use_GPU_ICP" value="$(arg use_GPU_ICP)"/>
         <param name="trim_low" value="$(arg trim_low)" />
         <param name="trim_high" value="$(arg trim_high)" />
         <param name="init_x" value="$(arg init_x)" />

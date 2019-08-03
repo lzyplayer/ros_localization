@@ -7,8 +7,12 @@
 #include <dw/icp/icp.h>
 //pcl
 #include <pcl/io/pcd_io.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/common/transforms.h>
+#include <pcl/visualization/pcl_visualizer.h>
 //eigen
 #include <Eigen/Dense>
+
 
 
 typedef dwLidarPointXYZI dwPoint;
@@ -16,9 +20,7 @@ typedef std::vector<dwPoint> dwPCD;
 using namespace std;
 using namespace Eigen;
 
-std::vector<dwPoint> pcd2dwpc (std::string filepath){
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::io::loadPCDFile(filepath,*cloud);
+std::vector<dwPoint> pcd2dwpc (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud){
     dwPCD cdwpcd;
     cdwpcd.reserve(5000);
     for (size_t i = 0 ; i<cloud->size();i++){
@@ -68,12 +70,27 @@ int main(int argc, char **argv)
     params.maxPoints=30000;
     params.icpType=dwICPType::DW_ICP_TYPE_LIDAR_POINT_CLOUD;
     dwICP_initialize(&icpHandle, &params, context);
-    dwICP_setMaxIterations(30, icpHandle);
-    dwICP_setConvergenceTolerance(1e-3, 1e-3, icpHandle);
+    dwICP_setMaxIterations(200, icpHandle);
+    dwICP_setConvergenceTolerance(1e-5, 1e-5, icpHandle);
 
-    /**perform icp**/
-    dwPCD dataCloud = pcd2dwpc("/home/vickylzy/workspaceROS/MAP_BAG/yuyao/shunyuFac1.pcd");
-    dwPCD ModelCloud = pcd2dwpc("/home/vickylzy/workspaceROS/MAP_BAG/yuyao/shunyuFac2.pcd");
+    /**load pcd**/
+    pcl::PointCloud<pcl::PointXYZ>::Ptr fed_data_pc (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr fed_model_pc (new pcl::PointCloud<pcl::PointXYZ>);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr dataPcd (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::io::loadPCDFile("/home/vickylzy/workspaceROS/MAP_BAG/yuyao/shunyuFac1.pcd",*dataPcd);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr modelPcd (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::io::loadPCDFile("/home/vickylzy/workspaceROS/MAP_BAG/yuyao/shunyuFac2.pcd",*modelPcd);
+    /**downsample**/
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    sor.setLeafSize(0.05f,0.05f,0.01f);
+    sor.setInputCloud(dataPcd);
+    sor.filter(*fed_data_pc);
+    sor.setInputCloud(modelPcd);
+    sor.filter(*fed_model_pc);
+    /** preform icp**/
+    dwPCD dataCloud = pcd2dwpc(fed_data_pc);
+    dwPCD ModelCloud = pcd2dwpc(fed_model_pc);
     dwICPIterationParams icpPatams{};
     icpPatams.sourcePts =  dataCloud.data();
     icpPatams.targetPts =  ModelCloud.data();
@@ -87,7 +104,7 @@ int main(int argc, char **argv)
     dwICP_optimize(&resultPose, &icpPatams, icpHandle);
     float64_t icpTime = 1000*(float64_t(clock()) - start ) / CLOCKS_PER_SEC;
 
-    // Get some stats about the ICP perforlmance
+    /**Get some stats about the ICP perforlmance**/
     dwICPResultStats icpResultStats;
     dwICP_getLastResultStats(&icpResultStats, icpHandle);
     cout << "ICP Time: " << icpTime << "ms" << endl
@@ -96,6 +113,19 @@ int main(int argc, char **argv)
          << "RMS cost: " << icpResultStats.rmsCost << endl
          << "Inlier fraction: " << icpResultStats.inlierFraction << endl
          << "ICP Spin Transform: " <<endl <<dwt2eigent(resultPose)<< endl;
+
+    /**viewer**/
+    pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("Viewer"));
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    pcl::transformPointCloud (*dataPcd, *transformed_cloud, dwt2eigent(resultPose));
+    viewer->addPointCloud(modelPcd,"model");
+    viewer->addPointCloud(transformed_cloud,"trans_data");
+    while (!viewer->wasStopped ())
+    {
+        viewer->spinOnce (100);
+        boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+    }
 
     /**release Driveworks SDK context**/
     dwICP_release(&icpHandle);

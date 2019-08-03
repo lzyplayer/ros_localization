@@ -31,6 +31,9 @@
 //nodelet
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
+//driveworks
+#include <dw/core/Context.h>
+#include <dw/icp/icp.h>
 //cpp
 #include <ctime>
 #include <limits.h>
@@ -44,7 +47,8 @@
 
 namespace rt_localization_ns{
     using namespace std;
-
+    typedef dwLidarPointXYZI dwPoint;
+    typedef std::vector<dwPoint> dwPCD;
 
     class RealTime_Localization: public nodelet::Nodelet {
     public:
@@ -70,6 +74,7 @@ namespace rt_localization_ns{
             auto icpRANSACOutlierRejectionThreshold = private_nh.param<float>("icpRANSACOutlierRejectionThreshold", 0.04f);
             auto icpTransformationEpsilon = private_nh.param<float>("icpTransformationEpsilon", 1e-8);
             auto downSampleSize = private_nh.param<float>("downSampleSize", 0.05f);
+            use_GPU_ICP = private_nh.param<bool>("use_GPU_ICP", false);
             map_tf = private_nh.param<std::string>("map_tf", "map");
             base_lidar_tf = private_nh.param<std::string>("base_lidar_tf", "velodyne");
             imu_odom_data.set_capacity(512);
@@ -84,13 +89,36 @@ namespace rt_localization_ns{
             curr_pose(2,3) =-trim_low;
             curr_pose_stamp =ros::Time(0.001);
 
-            //ndt_omp
-            pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt(new pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
-            ndt->setTransformationEpsilon(0.01);
-            ndt->setResolution(1.0);
-            ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
-            registration = ndt;
-            //registration-icp
+            if (use_GPU_ICP){
+                context     = DW_NULL_HANDLE;
+                icpHandle   = DW_NULL_HANDLE;
+                dwContextParameters sdkParams = {};
+                dwVersion sdkVersion;
+                dwGetVersion(&sdkVersion);
+                dwInitialize(&context, sdkVersion, &sdkParams);
+                /** status **/
+                std::cout << "Context of Driveworks SDK successfully initialized." <<std::endl;
+                std::cout << "Version: " << sdkVersion.major << "." << sdkVersion.minor << "." << sdkVersion.patch << std::endl;
+                int32_t gpuCount;
+                dwContext_getGPUCount(&gpuCount, context);
+                std::cout << "Available GPUs: " << gpuCount << std::endl;
+                /**intial dwICP**/
+                dwICPParams params{};
+                params.maxPoints=30000;
+                params.icpType=dwICPType::DW_ICP_TYPE_LIDAR_POINT_CLOUD;
+                dwICP_initialize(&icpHandle, &params, context);
+                dwICP_setMaxIterations(icpMaximumIterations, icpHandle);
+                dwICP_setConvergenceTolerance(icpTransformationEpsilon, icpTransformationEpsilon, icpHandle);
+            }
+            else {
+                //ndt_omp
+                pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt(
+                        new pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
+                ndt->setTransformationEpsilon(0.01);
+                ndt->setResolution(1.0);
+                ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
+                registration = ndt;
+                //registration-icp
 //            pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>::Ptr regis (new pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>());
 //            registration = regis;
 //            registration->setMaximumIterations(icpMaximumIterations);
@@ -98,6 +126,7 @@ namespace rt_localization_ns{
 //            registration->setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
 //            registration->setTransformationEpsilon(icpTransformationEpsilon);
 //        registration.set
+            }
             /**sub and pub**/
 //            odom_pub = nh.advertise<nav_msgs::Odometry>(map_tf,50);
             odom_pub = nh.advertise<nav_msgs::Odometry>("/odom",50);
@@ -157,7 +186,7 @@ namespace rt_localization_ns{
 
             //publish tf
             transformBroadcaster.sendTransform(matrix2transform(points_msg->header.stamp,curr_pose,map_tf,base_lidar_tf));
-            //publish odom (optional)
+            //publish odom 
             nav_msgs::Odometry odom = rotm2odometry(transform,points_msg->header.stamp,map_tf,base_lidar_tf);
             odom_pub.publish(odom);
 
@@ -249,20 +278,75 @@ namespace rt_localization_ns{
         }
 
         Eigen::Matrix4f pc_register(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& curr_cloud,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& local_map,const Eigen::Matrix4f& initial_matrix){
-            //registration
-            registration->setInputSource(curr_cloud);
-            registration->setInputTarget(local_map);
-            pcl::PointCloud<pcl::PointXYZ> result_cloud ;
-            //registration start
-            clock_t start = clock();
-            registration->align(result_cloud,initial_matrix);//,curr_pose
-            clock_t end = clock();
-            NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
-            NODELET_INFO("fitness score = %f ",registration->getFitnessScore());
+            if (use_GPU_ICP){
+
+                dwPCD dataCloud = pcd2dwpc(curr_cloud);
+                dwPCD ModelCloud = pcd2dwpc(local_map);
+                dwICPIterationParams icpPatams{};
+                icpPatams.sourcePts =  dataCloud.data();
+                icpPatams.targetPts =  ModelCloud.data();
+                icpPatams.nSourcePts = dataCloud.size();
+                icpPatams.nTargetPts = ModelCloud.size();
+                dwTransformation icpPriorPose = eigent2dwt(initial_matrix);
+                icpPatams.initialSource2Target = &icpPriorPose;
+                dwTransformation resultPose;
+                clock_t start = clock();
+                dwICP_optimize(&resultPose, &icpPatams, icpHandle);
+                clock_t end = clock();
+                NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
+
+                /**Get some stats about the ICP perforlmance**/
+                dwICPResultStats icpResultStats;
+                dwICP_getLastResultStats(&icpResultStats, icpHandle);
+                cout << "Number of Iterations: " << icpResultStats.actualNumIterations << endl
+                     << "Number of point correspondences: " << icpResultStats.numCorrespondences << endl
+                     << "RMS cost: " << icpResultStats.rmsCost << endl
+                     << "Inlier fraction: " << icpResultStats.inlierFraction << endl
+                     << "ICP Spin Transform: " <<endl <<dwt2eigent(resultPose)<< endl;
+
+                return dwt2eigent(resultPose);
+            } else{
+                //registration
+                registration->setInputSource(curr_cloud);
+                registration->setInputTarget(local_map);
+                pcl::PointCloud<pcl::PointXYZ> result_cloud ;
+                //registration start
+                clock_t start = clock();
+                registration->align(result_cloud,initial_matrix);//,curr_pose
+                clock_t end = clock();
+                NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
+                NODELET_INFO("fitness score = %f ",registration->getFitnessScore());
 //            NODELET_INFO(" ");
-            return registration->getFinalTransformation();
+                return registration->getFinalTransformation();
 //        Vector3f euler = rot2euler(transform.block(0,0,3,3));
 //        NODELET_INFO("x = %f, y = %f, theta = %f ",transform(0,3),transform(1,3),euler(2));
+            }
+        }
+
+        std::vector<dwPoint> pcd2dwpc (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud){
+            dwPCD cdwpcd;
+            cdwpcd.reserve(5000);
+            for (size_t i = 0 ; i<cloud->size();i++){
+                dwPoint dwp = {cloud->points[i].x,cloud->points[i].y,cloud->points[i].z,1};
+                cdwpcd.push_back(dwp);
+            }
+            return cdwpcd;
+        }
+
+        Eigen::Matrix4f dwt2eigent(const dwTransformation& dwt){
+            Eigen::Matrix4f ematrix;
+            for(int8_t i = 0; i < 16 ; ++i){
+                ematrix(i) = dwt.array[i] ;
+            }
+            return ematrix;
+        }
+
+        dwTransformation eigent2dwt(const Eigen::Matrix4f& ematrix){
+            dwTransformation deM = DW_IDENTITY_TRANSFORMATION;
+            for(int8_t i = 0; i < 16 ; ++i){
+                deM.array[i] = ematrix(i);
+            }
+            return deM;
         }
 
     private:
@@ -271,6 +355,9 @@ namespace rt_localization_ns{
         ros::NodeHandle nh;
         ros::NodeHandle mt_nh;
         ros::NodeHandle private_nh;
+        // drivework handle
+        dwContextHandle_t context;
+        dwICPHandle_t  icpHandle;
         // para
         float trim_low;
         float trim_high;
@@ -281,6 +368,7 @@ namespace rt_localization_ns{
         double velosity_x;
         double velosity_y;
         double velosity_yaw;
+        bool use_GPU_ICP;
         // suber and puber
         ros::Publisher curr_pointcloud_pub;
         ros::Subscriber odom_suber;

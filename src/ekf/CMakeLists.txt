@@ -66,12 +66,19 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 # Executables
 
 add_executable(bicycleslamlidarnode src/bicycleslamlidar.cpp)
+add_dependencies(bicycleslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(akermanslamlidarnode src/akermanslamlidar.cpp)
+add_dependencies(akermanslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(akermanlidarnode src/akermangpslidar.cpp)
+add_dependencies(akermanlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(akermangpsnode src/akermangps.cpp)
+add_dependencies(akermangpsnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(akermannode src/akerman-un.cpp)
+add_dependencies(akermannode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(bicyclenode src/bicycle-un.cpp)
+add_dependencies(bicyclenode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(akermangpsvelnode src/akermangpsvel.cpp)
+add_dependencies(akermangpsvelnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 target_link_libraries(bicycleslamlidarnode ${catkin_LIBRARIES})

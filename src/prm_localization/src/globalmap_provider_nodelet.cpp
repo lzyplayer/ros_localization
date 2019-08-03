@@ -6,6 +6,7 @@
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 //tf
 #include <tf/transform_listener.h>
 // pcl
@@ -77,7 +78,7 @@ namespace globalmap_ns {
 //            pose_suber = mt_nh.subscribe("/TOPIC_OF_ODOM",1,&GlobalmapProviderNodelet::pose_callback,this);
             localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",1);
             timer = nh.createTimer(ros::Duration(mapUpdateTime),&GlobalmapProviderNodelet::localmap_callback,this);
-            timer_poseUpdate = nh.createTimer(ros::Duration(0.5),&GlobalmapProviderNodelet::pose_callback,this);
+            lidar_pose_sub = nh.subscribe("/odom",1,&GlobalmapProviderNodelet::pose_callback,this);
             /**publish a localmap at once**/
             ros::TimerEvent init_event;
             localmap_callback(init_event);
@@ -89,20 +90,10 @@ namespace globalmap_ns {
          * update newest pose
          * @param pose_msg
          */
-        void pose_callback(const ros::TimerEvent& event){
-            tf::StampedTransform transform;
-            try{
-                ros::Time now = ros::Time::now();
-                listener.waitForTransform(map_tf, base_lidar_tf,now, ros::Duration(5.0));
-                listener.lookupTransform(map_tf, base_lidar_tf,now, transform);
-            }
-            catch (tf::TransformException &ex) {
-                ROS_ERROR("%s",ex.what());
-                ros::Duration(1.0).sleep();
-            }
-            curr_pose->pose.position.x=transform.getOrigin().x();
-            curr_pose->pose.position.y=transform.getOrigin().y();
-            curr_pose->pose.position.z=transform.getOrigin().z();
+        void pose_callback(const nav_msgs::OdometryConstPtr& odom_msg){
+            curr_pose->pose.position.x=odom_msg->pose.pose.position.x;
+            curr_pose->pose.position.y=odom_msg->pose.pose.position.y;
+            curr_pose->pose.position.z=odom_msg->pose.pose.position.z;
 
         }
         /**
@@ -152,6 +143,7 @@ namespace globalmap_ns {
         ros::NodeHandle mt_nh;
         ros::NodeHandle private_nh;
         // suber and puber
+        ros::Subscriber lidar_pose_sub;
         ros::Publisher localmap_pub;
         ros::Publisher globalmap_pub;
         tf::TransformListener listener;
