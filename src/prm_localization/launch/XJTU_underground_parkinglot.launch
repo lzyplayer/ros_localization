@@ -12,17 +12,17 @@
     <arg name="init_yaw" default="0.0" />
     <arg name="trim_low" default="-1.8" />
     <arg name="trim_high" default="3" />
-    <arg name="radius" default="30.0" />
-    <arg name="mapUpdateTime" default="5" />
+    <arg name="radius" default="25.0" />
+    <arg name="mapUpdateTime" default="2" />
     <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/catkin_ws/src/prm_localization/data/XJTU_underground_parkinglot.pcd" />
 <!--icp para-->
     <arg name="use_GPU_ICP" default="false"/>
     <arg name="downsample_resolution" default="0.1" />
-    <arg name="icpMaximumIterations" default="50" />
-    <arg name="icpRANSACOutlierRejectionThreshold" default="0.08" />
-    <arg name="icpTransformationEpsilon" default="1e-3" />
+    <arg name="icpMaximumIterations" default="90" />
+    <arg name="icpRANSACOutlierRejectionThreshold" default="0.04" />
+    <arg name="icpTransformationEpsilon" default="1e-5" />
 <!--    filter-->
-    <arg name="farPointThreshold" default="20" />
+    <arg name="farPointThreshold" default="25" />
     <arg name="nearPointThreshold" default="1.3" />
 
 
@@ -48,6 +48,7 @@
         <param name="downSampleSize" value="$(arg downsample_resolution)"  />
     </node>
     <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager">
+        <param name="use_GPU_ICP" value="$(arg use_GPU_ICP)"/>
         <param name="downsample_resolution" value="$(arg downsample_resolution)" />
         <param name="map_tf" value="$(arg map_tf)" />
         <param name="base_lidar_tf" value="$(arg base_lidar_tf)" />

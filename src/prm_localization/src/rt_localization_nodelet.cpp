@@ -104,7 +104,7 @@ namespace rt_localization_ns{
                 std::cout << "Available GPUs: " << gpuCount << std::endl;
                 /**intial dwICP**/
                 dwICPParams params{};
-                params.maxPoints=30000;
+                params.maxPoints=32767;
                 params.icpType=dwICPType::DW_ICP_TYPE_LIDAR_POINT_CLOUD;
                 dwICP_initialize(&icpHandle, &params, context);
                 dwICP_setMaxIterations(icpMaximumIterations, icpHandle);
@@ -186,7 +186,7 @@ namespace rt_localization_ns{
 
             //publish tf
             transformBroadcaster.sendTransform(matrix2transform(points_msg->header.stamp,curr_pose,map_tf,base_lidar_tf));
-            //publish odom 
+            //publish odom
             nav_msgs::Odometry odom = rotm2odometry(transform,points_msg->header.stamp,map_tf,base_lidar_tf);
             odom_pub.publish(odom);
 
@@ -287,6 +287,13 @@ namespace rt_localization_ns{
                 icpPatams.targetPts =  ModelCloud.data();
                 icpPatams.nSourcePts = dataCloud.size();
                 icpPatams.nTargetPts = ModelCloud.size();
+                cout<<"curr points:\t"<<icpPatams.nSourcePts<<endl;
+                cout<<"map points:\t"<<icpPatams.nTargetPts<<endl;
+                if(icpPatams.nTargetPts>32767 ||icpPatams.nSourcePts>32767) {
+                    throw "points num cannot be large that 32767";
+                }
+                cout<<"icpPatams.nTargetPts\t"<<icpPatams.nTargetPts<<endl;
+                cout<<"icpPatams.nSourcePts\t"<<icpPatams.nSourcePts<<endl;
                 dwTransformation icpPriorPose = eigent2dwt(initial_matrix);
                 icpPatams.initialSource2Target = &icpPriorPose;
                 dwTransformation resultPose;
@@ -296,13 +303,13 @@ namespace rt_localization_ns{
                 NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
 
                 /**Get some stats about the ICP perforlmance**/
-                dwICPResultStats icpResultStats;
-                dwICP_getLastResultStats(&icpResultStats, icpHandle);
-                cout << "Number of Iterations: " << icpResultStats.actualNumIterations << endl
-                     << "Number of point correspondences: " << icpResultStats.numCorrespondences << endl
-                     << "RMS cost: " << icpResultStats.rmsCost << endl
-                     << "Inlier fraction: " << icpResultStats.inlierFraction << endl
-                     << "ICP Spin Transform: " <<endl <<dwt2eigent(resultPose)<< endl;
+//                dwICPResultStats icpResultStats;
+//                dwICP_getLastResultStats(&icpResultStats, icpHandle);
+//                cout << "Number of Iterations: " << icpResultStats.actualNumIterations << endl
+//                     << "Number of point correspondences: " << icpResultStats.numCorrespondences << endl
+//                     << "RMS cost: " << icpResultStats.rmsCost << endl
+//                     << "Inlier fraction: " << icpResultStats.inlierFraction << endl
+//                     << "ICP Spin Transform: " <<endl <<dwt2eigent(resultPose)<< endl;
 
                 return dwt2eigent(resultPose);
             } else{

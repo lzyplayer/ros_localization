@@ -43,6 +43,7 @@ namespace globalmap_ns {
             radius = private_nh.param<float>("radius", 40.0f);
             int mapUpdateTime =private_nh.param<int>("mapUpdateTime", 8);
             auto downsample_resolution = private_nh.param<float>("downsample_resolution", 0.05f);
+            use_GPU_ICP = private_nh.param<bool>("use_GPU_ICP", false);
             std::string globalmap_pcd = private_nh.param<std::string>("global_map_pcd_path", "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd");
             map_tf = private_nh.param<std::string>("map_tf", "map");
             base_lidar_tf = private_nh.param<std::string>("base_lidar_tf", "velodyne");
@@ -63,7 +64,10 @@ namespace globalmap_ns {
             pcl::io::loadPCDFile(globalmap_pcd, *full_map);
             /**pcdownsample**/
             boost::shared_ptr<pcl::VoxelGrid<pcl::PointXYZ>> voxelgrid(new pcl::VoxelGrid<pcl::PointXYZ>());
-            voxelgrid->setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
+            if (use_GPU_ICP)
+                voxelgrid->setLeafSize(downsample_resolution*5, downsample_resolution*5, downsample_resolution*2);
+            else
+                voxelgrid->setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
             voxelgrid->setInputCloud(full_map);
             pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>());
             voxelgrid->filter(*filtered);
@@ -153,6 +157,7 @@ namespace globalmap_ns {
         // parameter
         geometry_msgs::PoseStampedPtr curr_pose;
         pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;
+        bool use_GPU_ICP;
         float radius;
         // ros timer
         ros::Timer timer ;

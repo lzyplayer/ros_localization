@@ -81,6 +81,7 @@ add_library(rt_localization_nodelet src/rt_localization_nodelet.cpp)
 target_link_libraries(rt_localization_nodelet
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
+        ${Driveworks_LIBRARIES}
         )
 #node
 add_executable(blank
