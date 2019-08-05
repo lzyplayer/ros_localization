@@ -137,7 +137,6 @@ namespace rt_localization_ns{
             curr_pointcloud_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
             lp_odom_pub = mt_nh.advertise<nav_msgs::Odometry>("/lp_odom",10);
             lp_timer  = nh.createTimer(ros::Duration(0.05),&RealTime_Localization::lp_odom_callback,this);
-            cout<<"pubLidarodom"<<endl;
             //add for debug regis_input
             Regis_input_odom = nh.advertise<nav_msgs::Odometry>("/regis_in_odom",50);
             /**utility param**/
@@ -155,7 +154,6 @@ namespace rt_localization_ns{
             imu_odom_data.push_back(odom_msg);
         }
         void lp_odom_callback(const ros::TimerEvent& event){
-            cout<<"pubLidarodom"<<endl;
             Matrix4f predict_pose = predict(curr_pose,curr_pose_stamp,event.current_real);
             nav_msgs::Odometry odometry  = rotm2odometry(predict_pose,event.current_real,map_tf,base_lidar_tf);
             lp_odom_pub.publish(odometry);
