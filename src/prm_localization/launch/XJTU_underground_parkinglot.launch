@@ -12,14 +12,14 @@
     <arg name="init_yaw" default="0.0" />
     <arg name="trim_low" default="-1.8" />
     <arg name="trim_high" default="3" />
-    <arg name="radius" default="25.0" />
+    <arg name="radius" default="30.0" />
     <arg name="mapUpdateTime" default="2" />
     <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/catkin_ws/src/prm_localization/data/XJTU_underground_parkinglot.pcd" />
 <!--icp para-->
     <arg name="use_GPU_ICP" default="false"/>
     <arg name="downsample_resolution" default="0.1" />
-    <arg name="icpMaximumIterations" default="90" />
-    <arg name="icpRANSACOutlierRejectionThreshold" default="0.04" />
+    <arg name="icpMaximumIterations" default="30" />
+    <arg name="icpRANSACOutlierRejectionThreshold" default="0.08" />
     <arg name="icpTransformationEpsilon" default="1e-5" />
 <!--    filter-->
     <arg name="farPointThreshold" default="25" />
@@ -60,7 +60,7 @@
         <param name="global_map_pcd_path" value="$(arg global_map_pcd_path)" />
     </node>
 <!--    shen's node-->
-    <node pkg="slamwithimu" type="slamimumode" name="mailun_node"/>
+<!--    <node pkg="slamwithimu" type="slamimumode" name="mailun_node"/>-->
 <!--        <node pkg="syq_ekf" type="akermanslamlidarnode" name="karman_node"/>-->
 </launch>
 <!--        output="screen"-->

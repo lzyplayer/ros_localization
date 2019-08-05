@@ -72,7 +72,7 @@ namespace rt_localization_ns{
             auto init_yaw = private_nh.param<double>("init_yaw", 0.0);
             auto icpMaximumIterations = private_nh.param<int>("icpMaximumIterations", 50);
             auto icpRANSACOutlierRejectionThreshold = private_nh.param<float>("icpRANSACOutlierRejectionThreshold", 0.04f);
-            auto icpTransformationEpsilon = private_nh.param<float>("icpTransformationEpsilon", 1e-8);
+            auto icpTransformationEpsilon = private_nh.param<float>("icpTransformationEpsilon", 1e-5);
             auto downSampleSize = private_nh.param<float>("downSampleSize", 0.05f);
             use_GPU_ICP = private_nh.param<bool>("use_GPU_ICP", false);
             map_tf = private_nh.param<std::string>("map_tf", "map");
@@ -135,6 +135,9 @@ namespace rt_localization_ns{
             localmap_suber =  mt_nh.subscribe("/localmap",1,&RealTime_Localization::localmap_callback,this);
             //imu_odom_suber = mt_nh.subscribe("/imu_odometry",512,&RealTime_Localization::imu_callback,this);
             curr_pointcloud_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/registered_pointCloud",5);
+            lp_odom_pub = mt_nh.advertise<nav_msgs::Odometry>("/lp_odom",10);
+            lp_timer  = nh.createTimer(ros::Duration(0.05),&RealTime_Localization::lp_odom_callback,this);
+            cout<<"pubLidarodom"<<endl;
             //add for debug regis_input
             Regis_input_odom = nh.advertise<nav_msgs::Odometry>("/regis_in_odom",50);
             /**utility param**/
@@ -151,9 +154,15 @@ namespace rt_localization_ns{
             std::lock_guard<std::mutex> odom_lock(imu_odom_data_mutex);
             imu_odom_data.push_back(odom_msg);
         }
+        void lp_odom_callback(const ros::TimerEvent& event){
+            cout<<"pubLidarodom"<<endl;
+            Matrix4f predict_pose = predict(curr_pose,curr_pose_stamp,event.current_real);
+            nav_msgs::Odometry odometry  = rotm2odometry(predict_pose,event.current_real,map_tf,base_lidar_tf);
+            lp_odom_pub.publish(odometry);
+
+        }
 
         void points_callback(const sensor_msgs::PointCloud2ConstPtr& points_msg){
-
             //send get flag (optional)
             nav_msgs::Odometry flag_odom;
             flag_odom.header.stamp=points_msg->header.stamp;
@@ -177,10 +186,13 @@ namespace rt_localization_ns{
              *  "odom_pose" for imu odometry or karmanfilter
              *  "curr_pose" for none
              */
+
             Matrix4f transform = pc_register(flat_cloud, localmap_cloud, predict_pose);
+
+
             update_velocity(curr_pose,transform,curr_pose_stamp,points_msg->header.stamp);
             curr_pose=transform;
-            NODELET_INFO("time to former stamp = %f seconds",points_msg->header.stamp.toSec()-curr_pose_stamp.toSec());
+//            NODELET_INFO("time to former stamp = %f seconds",points_msg->header.stamp.toSec()-curr_pose_stamp.toSec());
             curr_pose_stamp = points_msg->header.stamp;
 
 
@@ -322,7 +334,7 @@ namespace rt_localization_ns{
                 registration->align(result_cloud,initial_matrix);//,curr_pose
                 clock_t end = clock();
                 NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
-                NODELET_INFO("fitness score = %f ",registration->getFitnessScore());
+//                NODELET_INFO("fitness score = %f ",registration->getFitnessScore());
 //            NODELET_INFO(" ");
                 return registration->getFinalTransformation();
 //        Vector3f euler = rot2euler(transform.block(0,0,3,3));
@@ -385,7 +397,8 @@ namespace rt_localization_ns{
         ros::Publisher odom_pub;
         ros::Publisher get_pmsg_pub;
         ros::Publisher Regis_input_odom;
-        ros::Timer timer;
+        ros::Publisher lp_odom_pub;
+        ros::Timer lp_timer;
         tf::TransformBroadcaster transformBroadcaster;
         //tf
         string map_tf;
