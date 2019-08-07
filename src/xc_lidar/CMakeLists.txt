@@ -10,7 +10,6 @@ add_definitions(-std=c++11)
 set(CMAKE_BUILD_TYPE "RELEASE")
 
 find_package(catkin REQUIRED COMPONENTS
-  nodelet
   pcl_ros
   roscpp
   rospy
