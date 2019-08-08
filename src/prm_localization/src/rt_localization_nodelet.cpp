@@ -156,6 +156,7 @@ namespace rt_localization_ns{
         void lp_odom_callback(const ros::TimerEvent& event){
             Matrix4f predict_pose = predict(curr_pose,curr_pose_stamp,event.current_real);
             nav_msgs::Odometry odometry  = rotm2odometry(predict_pose,event.current_real,map_tf,base_lidar_tf);
+            odometry.pose.covariance[0]=curr_fitness;
             lp_odom_pub.publish(odometry);
 
         }
@@ -198,6 +199,7 @@ namespace rt_localization_ns{
             transformBroadcaster.sendTransform(matrix2transform(points_msg->header.stamp,curr_pose,map_tf,base_lidar_tf));
             //publish odom
             nav_msgs::Odometry odom = rotm2odometry(transform,points_msg->header.stamp,map_tf,base_lidar_tf);
+            odom.pose.covariance[0]=curr_fitness;
             odom_pub.publish(odom);
 
             //publish cloud  (optional)
@@ -332,6 +334,7 @@ namespace rt_localization_ns{
                 registration->align(result_cloud,initial_matrix);//,curr_pose
                 clock_t end = clock();
                 NODELET_INFO("registration regis time = %f seconds",(double)(end  - start) / CLOCKS_PER_SEC);
+                curr_fitness = registration->getFitnessScore();
 //                NODELET_INFO("fitness score = %f ",registration->getFitnessScore());
 //            NODELET_INFO(" ");
                 return registration->getFinalTransformation();
@@ -386,6 +389,7 @@ namespace rt_localization_ns{
         double velosity_y;
         double velosity_yaw;
         bool use_GPU_ICP;
+        double curr_fitness;
         // suber and puber
         ros::Publisher curr_pointcloud_pub;
         ros::Subscriber odom_suber;

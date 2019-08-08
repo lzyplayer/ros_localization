@@ -1,7 +1,7 @@
 #ifndef SENSOR_MEASUREMENT_BASE
 #define SENSOR_MEASUREMENT_BASE
 
-#include "ekf_core/kalman_filter_model_base.hpp"
+#include "ukf_core/kalman_filter_model_base.hpp"
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
@@ -16,12 +16,11 @@ template<int NMeasurement>
 class SensorMeasurementBase
 {
 public:
-    const static int NumberMeasurement = NMeasurement;
+    static const int NumberMeasurement = NMeasurement;
 
     typedef Eigen::Matrix<double, NMeasurement, 1> MeasurementVector;
     typedef Eigen::Matrix<int, NMeasurement, 1> MeasurementFlagVector;
     typedef Eigen::Matrix<double, NMeasurement, NMeasurement> MeasurementMatrix;
-
 
     SensorMeasurementBase()
     {
@@ -71,17 +70,18 @@ private:
 namespace SensorMeasurementConverter
 {
     template<typename TMeasurement, typename TModel>
-    void getMeasurementJacobian(
+    void getMeasurementPub(
         const typename TModel::ModelParameter& parameter,
         const typename TModel::FilterVector& state,
-        Eigen::Matrix<double, TMeasurement::NumberMeasurement, TModel::NumberState>& H
+        typename TMeasurement::MeasurementVector& measurement
     );
 
     template<typename TMeasurement, typename TModel>
     void getMeasurementPrediction(
         const typename TModel::ModelParameter& parameter,
-        const typename TModel::FilterVector& state,
-        typename TMeasurement::MeasurementVector& measurement
+        const Eigen::MatrixXd& Xsig_pred,
+        Eigen::MatrixXd& Zsig,
+        typename TMeasurement::MeasurementVector& measurement_pred
     );
 }
 

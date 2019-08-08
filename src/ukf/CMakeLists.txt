@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(slamwithimu)
-# set(CMAKE_BUILD_TYPE "Debug")
+project(ukf2)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 find_package(catkin REQUIRED COMPONENTS
@@ -18,12 +18,18 @@ find_package(catkin REQUIRED COMPONENTS
   dbw_mkz_msgs
   )
 
+# Attempt to find Eigen using its own CMake module.
+# If that fails, fall back to cmake_modules package.
+# find_package(Eigen3 REQUIRED)
+# message("!!!!!!!!!!")
+# message("${EIGEN3_INCLUDE_DIR}")
+# message("!!!!!!!!!!")
+
+find_package(ALGLIB REQUIRED)
+set(EIGEN_PACKAGE EIGEN3)
 
 #roslint_cpp()
-#add_message_files(FILES
-#  Zpre.msg
-#)
-#generate_messages(DEPENDENCIES std_msgs)
+
 catkin_package(
   INCLUDE_DIRS
     include
@@ -40,14 +46,13 @@ catkin_package(
     tf2_geometry_msgs
     tf2_ros
     dbw_mkz_msgs
-
 )
 
 ###########
 ## Build ##
 ###########
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${ALGLIB_INCLUDE_DIRS})
 
 # Library definitions
 # add_library(filter_utilities src/robot_localization/filter_utilities.cpp)
@@ -59,12 +64,13 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 # Dependencies
 #add_dependencies(filter_base ${PROJECT_NAME}_gencpp)
 
-# Executables
 
-add_executable(lidarimumode src/lidarodom.cpp )
-add_executable(slamimumode src/mailunca.cpp)
-add_executable(mailunca_debug src/mailunca_debug.cpp)
-target_link_libraries(mailunca_debug ${catkin_LIBRARIES})
-target_link_libraries(slamimumode ${catkin_LIBRARIES})
-target_link_libraries(lidarimumode ${catkin_LIBRARIES})
+
+add_executable(sukf2dslamlidarnode src/sukf2dslamlidar.cpp)
+add_dependencies(sukf2dslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(sukf2dslamlidarnode ${catkin_LIBRARIES})
+
+add_executable(sukf2dslamlidarrealtimenode src/sukf2dslamlidarrealtime.cpp)
+add_dependencies(sukf2dslamlidarrealtimenode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(sukf2dslamlidarrealtimenode ${catkin_LIBRARIES})
 
