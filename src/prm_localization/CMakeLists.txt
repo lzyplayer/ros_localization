@@ -81,7 +81,7 @@ add_library(rt_localization_nodelet src/rt_localization_nodelet.cpp)
 target_link_libraries(rt_localization_nodelet
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
-        ${Driveworks_LIBRARIES}
+        # ${Driveworks_LIBRARIES}
         )
 #node
 add_executable(blank
@@ -101,13 +101,13 @@ target_link_libraries(rt_localization_debug
         ${PCL_LIBRARIES}
         )
 
-add_executable(hello_nvidva
-        src/hello_nvidva.cpp
-        )
-add_dependencies(hello_nvidva ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(hello_nvidva
-        ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES}
-        ${Driveworks_LIBRARIES}
-        )
+# add_executable(hello_nvidva
+#         src/hello_nvidva.cpp
+#         )
+# add_dependencies(hello_nvidva ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(hello_nvidva
+#         ${catkin_LIBRARIES}
+#         ${PCL_LIBRARIES}
+        # ${Driveworks_LIBRARIES}
+#         )
 

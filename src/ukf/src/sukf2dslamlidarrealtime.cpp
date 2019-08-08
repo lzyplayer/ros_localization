@@ -432,8 +432,8 @@ int main(int argc, char **argv)
     odom_s_pub = node.advertise<nav_msgs::Odometry>("/sukf2dslamodometry", 10000);//pub出估计的结果
    
     //ros::Subscriber SLAMPOS_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/fixtoodometry", 10000, slamCallback);//10hz
-    ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/IMU_Xsens_RS232/raw_acceleration", 10, imuCallback);//200hz
-    ros::Subscriber SLAMPOS_sub = node.subscribe("/lp_odom", 10000, SlamCallback);//10hz
+    ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/raw_acceleration", 10, imuCallback);//200hz
+    ros::Subscriber SLAMPOS_sub = node.subscribe("/odom", 10000, SlamCallback);//10hz
     ros::Subscriber LIDAR_sub = node.subscribe("/lidar_odom", 10000, LidarCallback);//10hz
     ros::Subscriber LIDARSIG_sub = node.subscribe("/lidar_stamp", 10000, LidarsigCallback);//10hz
     ros::spin();//循环
