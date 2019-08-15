@@ -12,14 +12,14 @@
     <arg name="init_yaw" default="0.0" />
     <arg name="trim_low" default="-1.8" />
     <arg name="trim_high" default="3" />
-    <arg name="radius" default="25.0" />
+    <arg name="radius" default="20.0" />
     <arg name="mapUpdateTime" default="6" />
     <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/MAP_BAG/XJTU_underground_parkinglot/pcd/XJTU_mid_under.pcd" />
     <!--icp para-->
     <arg name="use_GPU_ICP" default="false"/>
-    <arg name="downsample_resolution" default="0.15" />
-    <arg name="icpMaximumIterations" default="30" />
-    <arg name="icpRANSACOutlierRejectionThreshold" default="0.08" />
+    <arg name="downsample_resolution" default="0.05" />
+    <arg name="icpMaximumIterations" default="10" />
+    <arg name="icpRANSACOutlierRejectionThreshold" default="0.04" />
     <arg name="icpTransformationEpsilon" default="1e-3" />
     <!--    filter-->
     <arg name="farPointThreshold" default="20" />

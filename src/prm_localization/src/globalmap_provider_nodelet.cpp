@@ -80,7 +80,7 @@ namespace globalmap_ns {
             kdtree.setInputCloud(full_map);
             /**sub and pub**/
 //            pose_suber = mt_nh.subscribe("/TOPIC_OF_ODOM",1,&GlobalmapProviderNodelet::pose_callback,this);
-            localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",1);
+            localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",1, true);
             timer = nh.createTimer(ros::Duration(mapUpdateTime),&GlobalmapProviderNodelet::localmap_callback,this);
             lidar_pose_sub = nh.subscribe("/odom",1,&GlobalmapProviderNodelet::pose_callback,this);
             /**publish a localmap at once**/
@@ -138,7 +138,7 @@ namespace globalmap_ns {
             trimmed_cloud->header.frame_id=map_tf;
             pcl_conversions::toPCL(curr_pose->header.stamp, trimmed_cloud->header.stamp);
             localmap_pub.publish(trimmed_cloud);
-            NODELET_INFO(" local map updated");
+            NODELET_INFO(" local map updated on x:%f, y:%f, z:%f", searchPoint.x,searchPoint.y,searchPoint.z);
         }
     public:
         pcl::PointCloud<pcl::PointXYZ>::Ptr full_map;

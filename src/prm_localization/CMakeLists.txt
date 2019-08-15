@@ -27,12 +27,12 @@ message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
 message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})
 
 #nvidva
-message(STATUS "CMAKE_SOURCE_DIR:" ${CMAKE_SOURCE_DIR})
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/prm_localization/cmake/Modules/")
-find_package(CUDA REQUIRED)
-find_package(Threads REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(Driveworks REQUIRED)
+#message(STATUS "CMAKE_SOURCE_DIR:" ${CMAKE_SOURCE_DIR})
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/prm_localization/cmake/Modules/")
+#find_package(CUDA REQUIRED)
+#find_package(Threads REQUIRED)
+#find_package(GLEW REQUIRED)
+#find_package(Driveworks REQUIRED)
 
 #set(Driveworks_INCLUDE_DIRS ${Driveworks_INCLUDE_DIRS} "/usr/local/driveworks/include/")
 #set(CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} "/usr/local/cuda/include")
@@ -71,8 +71,8 @@ catkin_package(
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-    ${Driveworks_INCLUDE_DIRS}
-    ${CUDA_INCLUDE_DIRS}
+#    ${Driveworks_INCLUDE_DIRS}
+#    ${CUDA_INCLUDE_DIRS}
 )
 #nodelets
 
@@ -86,8 +86,8 @@ target_link_libraries(globalmap_provider_nodelet
 add_library(rt_localization_nodelet src/rt_localization_nodelet.cpp)
 target_link_libraries(rt_localization_nodelet
         ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES}
-        ${Driveworks_LIBRARIES}
+#        ${PCL_LIBRARIES}
+#        ${Driveworks_LIBRARIES}
         )
 #node
 # add_executable(blank

@@ -12,15 +12,15 @@
     <arg name="init_yaw" default="-1.5708" />
     <arg name="trim_low" default="-0.4" />
     <arg name="trim_high" default="4.5" />
-    <arg name="radius" default="25.0" />
+    <arg name="radius" default="20.0" />
     <arg name="mapUpdateTime" default="5" />
     <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/MAP_BAG/yuyao/8_7/shunyu_factory_half.pcd" />
     <!--icp para-->
     <arg name="use_GPU_ICP" default="false"/>
-    <arg name="downsample_resolution" default="0.1" />
-    <arg name="icpMaximumIterations" default="30" />
-    <arg name="icpRANSACOutlierRejectionThreshold" default="0.08" />
-    <arg name="icpTransformationEpsilon" default="1e-5" />
+    <arg name="downsample_resolution" default="0.05" />
+    <arg name="icpMaximumIterations" default="10" />
+    <arg name="icpRANSACOutlierRejectionThreshold" default="0.04" />
+    <arg name="icpTransformationEpsilon" default="1e-3" />
     <!--filter-->
     <arg name="farPointThreshold" default="20" />
     <arg name="nearPointThreshold" default="0.98" />
