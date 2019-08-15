@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+<!--argument-->
+  <!-- <arg name="slam_topic" default="/pioneer_sensors/EKF_Localization_RS232/filteredodometry" /> -->
+  <!-- Matrix R -->
+  <arg name="cov_slampos" default="0.01" />
+  <arg name="cov_slamyaw" default="0.01" />
+  <arg name="cov_slamvel" default="0.1" />
+  <arg name="cov_imuacc" default="0.1" />
+  <arg name="cov_imuang" default="0.1" />
+  <!-- Matrix Q -->
+  <arg name="ppos" default="0.05" />
+  <arg name="pv" default="0.05" />
+  <arg name="pyaw" default="0.01" />
+  <arg name="pa" default="1" />
+  <arg name="pw" default="0.05" />
+  <!-- 是否后续去除向心加速度 -->
+  <arg name="flag_linearacc" default="false" />
+  <!-- 是否使用SLAM速度 -->
+  <arg name="flag_slamv" default="false" />
+  <!-- 是否后续进行加速度标定 -->
+  <arg name="flag_cali" default="false" />
+
+
+<!-- node -->
+  <node pkg="ukf" type="sukf2dslamlidarrealtimenode" name="ukfslamnode" output="screen"/>       
+    <!-- <remap from="/odometry" to="$(arg slam_topic)" /> -->
+    <param name="cov_slampos" value="$(arg cov_slampos)"/>
+    <param name="cov_slamyaw" value="$(arg cov_slamyaw)"/>
+    <param name="cov_slamvel" value="$(arg cov_slamvel)"/>
+    <param name="cov_imuacc" value="$(arg cov_imuacc)"/>
+    <param name="cov_imuang" value="$(arg cov_imuang)"/>
+    <param name="ppos" value="$(arg ppos)"/>
+    <param name="pv" value="$(arg pv)"/>
+    <param name="pyaw" value="$(arg pyaw)"/>
+    <param name="pa" value="$(arg pa)"/>
+    <param name="pw" value="$(arg pw)"/>
+    <param name="flag_linearacc" value="$(arg flag_linearacc)"/>
+    <param name="flag_slamv" value="$(arg flag_slamv)"/>
+    <param name="flag_cali" value="$(arg flag_cali)"/>
+
+  <!-- <node pkg="ukf" type="sukf2dslamlidarrealtimetestnode" name="ukfslamtestnode" output="screen"/>
+    <param name="cov_slampos" value="$(arg cov_slampos)"/>
+    <param name="cov_slamyaw" value="$(arg cov_slamyaw)"/> -->
+</launch>
+<!-- 
+  不使用launch打开时，参数用的是cpp文件中获取时的默认值
+  使用launch打开时，参数用的是launch中的default取值
+  命令行可修改launch的default，也可以直接修改launch文件，无需重新编译
+ -->

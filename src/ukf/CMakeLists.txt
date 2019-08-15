@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ukf2)
+project(ukf)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -46,7 +46,6 @@ catkin_package(
     tf2_geometry_msgs
     tf2_ros
     dbw_mkz_msgs
-  DEPENDS ${EIGEN_PACKAGE}
 )
 
 ###########
@@ -67,11 +66,9 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${ALGLIB_INCLUDE_DIRS})
 
 
 
-add_executable(sukf2dslamlidarnode src/sukf2dslamlidar.cpp)
-add_dependencies(sukf2dslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sukf2dslamlidarnode ${catkin_LIBRARIES})
 
 add_executable(sukf2dslamlidarrealtimenode src/sukf2dslamlidarrealtime.cpp)
 add_dependencies(sukf2dslamlidarrealtimenode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(sukf2dslamlidarrealtimenode ${catkin_LIBRARIES})
+
 
