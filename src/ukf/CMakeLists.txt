@@ -46,7 +46,6 @@ catkin_package(
     tf2_geometry_msgs
     tf2_ros
     dbw_mkz_msgs
-  DEPENDS ${EIGEN_PACKAGE}
 )
 
 ###########
@@ -66,6 +65,13 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${ALGLIB_INCLUDE_DIRS})
 #add_dependencies(filter_base ${PROJECT_NAME}_gencpp)
 
 
+add_executable(sukf2dnode src/sukf2d.cpp)
+add_dependencies(sukf2dnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(sukf2dnode ${catkin_LIBRARIES})
+
+# add_executable(sukf3dnode src/sukf3d.cpp)
+# add_dependencies(sukf3dnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(sukf3dnode ${catkin_LIBRARIES})
 
 add_executable(sukf2dslamlidarnode src/sukf2dslamlidar.cpp)
 add_dependencies(sukf2dslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

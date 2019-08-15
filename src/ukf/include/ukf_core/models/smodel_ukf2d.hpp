@@ -88,7 +88,7 @@ public:
         double delta2 = delta * delta;
         double yawt = yaw + w * delta;
         //pos
-        cout << "w" << w << endl;
+        // cout << "w" << w << endl;
         if(abs(w) > LIMITW)
         {
             a1 = vy*(cos(yawt)-cos(yaw)) + vx*(sin(yawt)-sin(yaw));
@@ -104,7 +104,7 @@ public:
             xsig_prediction(1) = p(1) + a2 + (1/2.0) * delta2 * (ay*cos(yaw) + ax*sin(yaw));
         }
         //v yaw
-        xsig_prediction.middleRows(2, 2) = v;// + acc_ * delta;
+        xsig_prediction.middleRows(2, 2) = v + acc_ * delta;
         xsig_prediction(4) = yawt;
 
         xsig_prediction.middleRows(5, 2) = xsig.middleRows(5, 2);		// constant acceleration

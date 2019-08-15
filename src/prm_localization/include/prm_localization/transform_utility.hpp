@@ -59,6 +59,19 @@ nav_msgs::Odometry rotm2odometry(const Eigen::Matrix4f& pose ,const ros::Time& s
     odometry.pose.pose.orientation.w=q.w();
     return odometry;
 }
+Matrix4f odom2rotm(const nav_msgs::OdometryConstPtr& odom_msg){
+    Matrix4f m4f;
+    Quaternionf qf;
+    m4f(0,3) = odom_msg->pose.pose.position.x;
+    m4f(1,3) = odom_msg->pose.pose.position.y;
+    m4f(2,3) = odom_msg->pose.pose.position.z;
+    qf.x() = odom_msg->pose.pose.orientation.x;
+    qf.y() = odom_msg->pose.pose.orientation.y;
+    qf.z() = odom_msg->pose.pose.orientation.z;
+    qf.w() = odom_msg->pose.pose.orientation.w;
+    m4f.block(0,0,3,3) = quat2rot(qf);
+    return m4f;
+}
 
 
 /**

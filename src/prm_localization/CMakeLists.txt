@@ -4,10 +4,15 @@ project(prm_localization)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
+set(${PROJECT_NAME}_CATKIN_DEPS
+        roscpp std_msgs rospy nodelet sensor_msgs pcl_ros pcl_msgs ndt_omp nav_msgs tf tf_conversions dbw_mkz_msgs
+)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs rospy nodelet sensor_msgs pcl_ros pcl_msgs ndt_omp )
+find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPS} )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -38,7 +43,7 @@ find_package(Driveworks REQUIRED)
 #)
 #link_directories(${Driveworks_LIBRARY_DIRS})
 
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -52,9 +57,10 @@ endif()
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES prm_localization
-#  CATKIN_DEPENDS other_catkin_pkg
+ CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPS}
 #  DEPENDS system_lib
 )
+
 
 ###########
 ## Build ##
@@ -81,25 +87,25 @@ add_library(rt_localization_nodelet src/rt_localization_nodelet.cpp)
 target_link_libraries(rt_localization_nodelet
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
-        # ${Driveworks_LIBRARIES}
+        ${Driveworks_LIBRARIES}
         )
 #node
-add_executable(blank
-        src/blank.cpp
-        )
-add_dependencies(blank ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(blank
-        ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES}
-        )
-add_executable(rt_localization_debug
-        src/rt_localization_debug.cpp
-        )
-add_dependencies(rt_localization_debug ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(rt_localization_debug
-        ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES}
-        )
+# add_executable(blank
+#         src/blank.cpp
+#         )
+# add_dependencies(blank ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(blank
+#         ${catkin_LIBRARIES}
+#         ${PCL_LIBRARIES}
+#         )
+# add_executable(rt_localization_debug
+#         src/rt_localization_debug.cpp
+#         )
+# add_dependencies(rt_localization_debug ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(rt_localization_debug
+#         ${catkin_LIBRARIES}
+#         ${PCL_LIBRARIES}
+#         )
 
 # add_executable(hello_nvidva
 #         src/hello_nvidva.cpp

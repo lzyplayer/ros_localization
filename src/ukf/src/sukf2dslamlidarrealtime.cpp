@@ -64,7 +64,7 @@ int output_count_ = 0;
 //传感器本身给定的误差水平,也许可以改成自适应
 //SLAM信号弱情况下，要提高其不准确度，根据covar可以输出体现
 Eigen::MatrixXd covar_imuacc = Eigen::MatrixXd::Identity(2,2) * 0.01;
-double covar_imuang = 0.1;
+double covar_imuang = 0.01;
 double covar_slamyaw = 0.1;
 Eigen::MatrixXd covar_slampos = Eigen::MatrixXd::Identity(2,2) * 0.1;
 double covar_lidarang=0.01;
@@ -89,8 +89,10 @@ decltype(g_filter_s)::Model::FilterVector outputstate_s_;//实时输出
 decltype(g_filter_s)::Model::FilterVector state_;//雷达第二帧状态
 double delta_;
 double t2_;
+int N= 0;
 double timestamp_old;
 bool flag_cali = false;//IMU系矫正
+bool flag_linearacc = false;//去向心加速度
 Eigen::Matrix<double, 2, 1> measurement1_lidar;//v
 Eigen::Matrix<double, 1, 1> measurement2_lidar;//w
 
@@ -104,6 +106,15 @@ Eigen::IOFormat eigen_csv_format(Eigen::FullPrecision, Eigen::DontAlignCols, ","
 
 void SlamCallback(const nav_msgs::OdometryConstPtr& input)
 {
+    // {
+    //     N = N + 1;  
+    //     if(N > 500 && N < 600)//丢失5s左右
+    //     {
+    //         std::cout << "断掉GPS，算法还准吗" << std::endl;
+    //         return;
+    //     }
+    // }
+
     double timestamp = input->header.stamp.toSec();
     if(!inite)//模型初始化
     {
@@ -122,10 +133,11 @@ void SlamCallback(const nav_msgs::OdometryConstPtr& input)
             measurement << input->pose.pose.position.x, input->pose.pose.position.y;
             Eigen::Matrix<double, 2, 2> covariance;
             covariance = covar_slampos;
-            // covariance << input->pose.covariance[0] * input->pose.covariance[0], 0,
-            // 0,input->pose.covariance[1] * input->pose.covariance[1];/////////////////////////////////////////////////含义？？？？
+            z_ = input->pose.pose.position.z;
+            // double cov = input->pose.covariance[0]/input->pose.covariance[1] * 0.1;//比例设定，适配于整个系统
+            // covariance << cov, 0,
+            // 0,cov;
             g_slam_position_measurement.setMeasurement(measurement, covariance, timestamp);
-    cout << "slam1" << endl;
 
             geometry_msgs::Quaternion orientation;
             orientation.x = input->pose.pose.orientation.x;
@@ -143,7 +155,6 @@ void SlamCallback(const nav_msgs::OdometryConstPtr& input)
             Eigen::Matrix<double, 1, 1> covariance1;
             covariance1 << covar_slamyaw;
             g_slam_heading_measurement.setMeasurement(measurement1, covariance1, timestamp);
-    cout << "slam1" << endl;
 
             g_slam_measurement_changed = true;
         }
@@ -268,7 +279,7 @@ void LidarCallback(const nav_msgs::OdometryConstPtr& input)// 处理演化过程
 }
 void imuCallback(const sensor_msgs::ImuConstPtr& input)
 {
-    cout << "imu" << endl;
+    // cout << "imu" << endl;
     rostimebegin = ros::Time::now().toSec();///////////////////////////////////////////////////////////////////////////////////////////////时间对齐
 
     bool imuinite = true;
@@ -291,11 +302,20 @@ void imuCallback(const sensor_msgs::ImuConstPtr& input)
             g_imu_angularvelocity_measurement.setMeasurement(angularvelocitymeasurement, angularvelocitycovariance, timestamp);
 
             Eigen::Matrix<double, 2, 1> accelerationmeasurement;
-            accelerationmeasurement << input->linear_acceleration.x, input->linear_acceleration.y;     
-            Eigen::Matrix<double, 2, 2> C;
-            C << 0, -1,
-                 -1, 0;
-            if (flag_cali)  accelerationmeasurement = C * accelerationmeasurement;
+            accelerationmeasurement << input->linear_acceleration.x, input->linear_acceleration.y; 
+            if(flag_linearacc)
+            {
+                Eigen::Matrix<double, 2, 1> V;
+                V << outputstate_s_(3), -outputstate_s_(2);
+                accelerationmeasurement += angularvelocitymeasurement(0) * V;
+            }
+            // if (flag_cali)  
+            // {
+            //     Eigen::Matrix<double, 2, 2> C2;
+            //     C2 << 0, -1,
+            //           -1, 0;
+            //     accelerationmeasurement = C2 * accelerationmeasurement;
+            // }
             Eigen::Matrix<double, 2, 2> accelerationcovariance;
             accelerationcovariance = covar_imuacc;
 
@@ -432,8 +452,9 @@ int main(int argc, char **argv)
     odom_s_pub = node.advertise<nav_msgs::Odometry>("/sukf2dslamodometry", 10000);//pub出估计的结果
    
     //ros::Subscriber SLAMPOS_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/fixtoodometry", 10000, slamCallback);//10hz
-    ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/raw_acceleration", 10, imuCallback);//200hz
-    ros::Subscriber SLAMPOS_sub = node.subscribe("/odom", 10000, SlamCallback);//10hz
+    ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/IMU_Xsens_RS232/raw_acceleration", 10, imuCallback);//200hz
+    // ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/raw_acceleration", 10, imuCallback);//200hz
+    ros::Subscriber SLAMPOS_sub = node.subscribe("/odom", 10000, SlamCallback);//10hz  lp_odom
     ros::Subscriber LIDAR_sub = node.subscribe("/lidar_odom", 10000, LidarCallback);//10hz
     ros::Subscriber LIDARSIG_sub = node.subscribe("/lidar_stamp", 10000, LidarsigCallback);//10hz
     ros::spin();//循环
