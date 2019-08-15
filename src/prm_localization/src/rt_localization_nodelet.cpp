@@ -115,19 +115,19 @@ namespace rt_localization_ns{
             }
             else {
                 //ndt_omp
-//                pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt(
-//                        new pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
-//                ndt->setTransformationEpsilon(0.01);
-//                ndt->setResolution(1.0);
-//                ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
-//                registration = ndt;
+               pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt(
+                       new pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
+               ndt->setTransformationEpsilon(0.01);
+               ndt->setResolution(1.0);
+               ndt->setNeighborhoodSearchMethod(pclomp::DIRECT7);
+               registration = ndt;
                 //registration-icp
-            pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>::Ptr regis (new pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>());
-            registration = regis;
-            registration->setMaximumIterations(icpMaximumIterations);
-            registration->setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
-            registration->setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
-            registration->setTransformationEpsilon(icpTransformationEpsilon);
+            // pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>::Ptr regis (new pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>());
+            // registration = regis;
+            // registration->setMaximumIterations(icpMaximumIterations);
+            // registration->setRANSACOutlierRejectionThreshold(icpRANSACOutlierRejectionThreshold);
+            // registration->setMaxCorrespondenceDistance(icpRANSACOutlierRejectionThreshold*100);
+            // registration->setTransformationEpsilon(icpTransformationEpsilon);
 //        registration.set
             }
             /**sub and pub**/

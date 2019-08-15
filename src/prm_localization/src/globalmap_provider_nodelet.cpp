@@ -116,7 +116,7 @@ namespace globalmap_ns {
             searchPoint.y = curr_pose->pose.position.y;
             searchPoint.z = curr_pose->pose.position.z;
             
-            NODELET_INFO("x:%f\t,y:%f\t,z:%f\t,kdtreeP:%d",searchPoint.x,searchPoint.y,searchPoint.z,(int)kdtree.getInputCloud()->size());
+            // NODELET_INFO("x:%f\t,y:%f\t,z:%f\t,kdtreeP:%d",searchPoint.x,searchPoint.y,searchPoint.z,(int)kdtree.getInputCloud()->size());
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr trimmed_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
             if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) {
 //                NODELET_INFO("trimmed_cloud init points_num:%ld",trimmed_cloud->width);
