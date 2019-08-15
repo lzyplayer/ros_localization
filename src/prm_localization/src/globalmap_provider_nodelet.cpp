@@ -6,6 +6,7 @@
 // ros_msg
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 //tf
 #include <tf/transform_listener.h>
 // pcl
@@ -42,6 +43,7 @@ namespace globalmap_ns {
             radius = private_nh.param<float>("radius", 40.0f);
             int mapUpdateTime =private_nh.param<int>("mapUpdateTime", 8);
             auto downsample_resolution = private_nh.param<float>("downsample_resolution", 0.05f);
+            use_GPU_ICP = private_nh.param<bool>("use_GPU_ICP", false);
             std::string globalmap_pcd = private_nh.param<std::string>("global_map_pcd_path", "/home/vickylzy/WorkSPacesROS/catkin_ws/src/prm_localization/data/shunYuFactory.pcd");
             map_tf = private_nh.param<std::string>("map_tf", "map");
             base_lidar_tf = private_nh.param<std::string>("base_lidar_tf", "velodyne");
@@ -62,7 +64,10 @@ namespace globalmap_ns {
             pcl::io::loadPCDFile(globalmap_pcd, *full_map);
             /**pcdownsample**/
             boost::shared_ptr<pcl::VoxelGrid<pcl::PointXYZ>> voxelgrid(new pcl::VoxelGrid<pcl::PointXYZ>());
-            voxelgrid->setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
+            if (use_GPU_ICP)
+                voxelgrid->setLeafSize(downsample_resolution*5, downsample_resolution*5, downsample_resolution*2);
+            else
+                voxelgrid->setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
             voxelgrid->setInputCloud(full_map);
             pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>());
             voxelgrid->filter(*filtered);
@@ -77,7 +82,7 @@ namespace globalmap_ns {
 //            pose_suber = mt_nh.subscribe("/TOPIC_OF_ODOM",1,&GlobalmapProviderNodelet::pose_callback,this);
             localmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/localmap",1);
             timer = nh.createTimer(ros::Duration(mapUpdateTime),&GlobalmapProviderNodelet::localmap_callback,this);
-            timer_poseUpdate = nh.createTimer(ros::Duration(0.5),&GlobalmapProviderNodelet::pose_callback,this);
+            lidar_pose_sub = nh.subscribe("/odom",1,&GlobalmapProviderNodelet::pose_callback,this);
             /**publish a localmap at once**/
             ros::TimerEvent init_event;
             localmap_callback(init_event);
@@ -89,18 +94,10 @@ namespace globalmap_ns {
          * update newest pose
          * @param pose_msg
          */
-        void pose_callback(const ros::TimerEvent& event){
-            tf::StampedTransform transform;
-            try{
-                listener.lookupTransform(map_tf, base_lidar_tf,ros::Time(0), transform);
-            }
-            catch (tf::TransformException &ex) {
-                ROS_ERROR("%s",ex.what());
-                ros::Duration(1.0).sleep();
-            }
-            curr_pose->pose.position.x=transform.getOrigin().x();
-            curr_pose->pose.position.y=transform.getOrigin().y();
-            curr_pose->pose.position.z=transform.getOrigin().z();
+        void pose_callback(const nav_msgs::OdometryConstPtr& odom_msg){
+            curr_pose->pose.position.x=odom_msg->pose.pose.position.x;
+            curr_pose->pose.position.y=odom_msg->pose.pose.position.y;
+            curr_pose->pose.position.z=odom_msg->pose.pose.position.z;
 
         }
         /**
@@ -118,7 +115,8 @@ namespace globalmap_ns {
             searchPoint.x = curr_pose->pose.position.x;
             searchPoint.y = curr_pose->pose.position.y;
             searchPoint.z = curr_pose->pose.position.z;
-//            NODELET_INFO("x:%f,y:%f,z:%f",searchPoint.x,searchPoint.y,searchPoint.z);
+            
+            NODELET_INFO("x:%f\t,y:%f\t,z:%f\t,kdtreeP:%d",searchPoint.x,searchPoint.y,searchPoint.z,(int)kdtree.getInputCloud()->size());
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr trimmed_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
             if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) {
 //                NODELET_INFO("trimmed_cloud init points_num:%ld",trimmed_cloud->width);
@@ -150,6 +148,7 @@ namespace globalmap_ns {
         ros::NodeHandle mt_nh;
         ros::NodeHandle private_nh;
         // suber and puber
+        ros::Subscriber lidar_pose_sub;
         ros::Publisher localmap_pub;
         ros::Publisher globalmap_pub;
         tf::TransformListener listener;
@@ -159,6 +158,7 @@ namespace globalmap_ns {
         // parameter
         geometry_msgs::PoseStampedPtr curr_pose;
         pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;
+        bool use_GPU_ICP;
         float radius;
         // ros timer
         ros::Timer timer ;

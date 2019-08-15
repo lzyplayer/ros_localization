@@ -19,7 +19,8 @@
 <build_depend>tf_conversions</build_depend>
 <build_depend>ndt_omp</build_depend>
 <build_depend>tf</build_depend>
-<build_depend>nav_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>dbw_mkz_msgs</build_depend>
 
 <build_export_depend>nodelet</build_export_depend>
 <build_export_depend>roscpp</build_export_depend>
@@ -31,7 +32,8 @@
 <build_export_depend>tf_conversions</build_export_depend>
 <build_export_depend>ndt_omp</build_export_depend>
 <build_export_depend>tf</build_export_depend>
-<build_export_depend>nav_msgs</build_export_depend>
+  <build_export_depend>nav_msgs</build_export_depend>
+  <build_export_depend>dbw_mkz_msgs</build_export_depend>
 
 <exec_depend>nodelet</exec_depend>
 <exec_depend>roscpp</exec_depend>
@@ -43,7 +45,8 @@
 <exec_depend>tf_conversions</exec_depend>
 <exec_depend>ndt_omp</exec_depend>
 <exec_depend>tf</exec_depend>
-<exec_depend>nav_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>dbw_mkz_msgs</exec_depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />

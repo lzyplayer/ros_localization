@@ -2,14 +2,14 @@
 <launch>
 <!--argument-->
     <arg name="points_topic" default="/lidar/vlp32_middle/PointCloud2" />
-    <arg name="map_tf" default="odom" />
+    <arg name="map_tf" default="odom_world" />
     <arg name="base_lidar_tf" default="base_foot" />
 <!--    <arg name="map_tf" default="map" />-->
 <!--    <arg name="base_lidar_tf" default="velodyne" />-->
 
-    <arg name="init_x" default="2.0" />
-    <arg name="init_y" default="1.2" />
-    <arg name="init_yaw" default="0.0" />
+    <arg name="init_x" default="33.828" />
+    <arg name="init_y" default="1.121" />
+    <arg name="init_yaw" default="3.14" />
     <arg name="trim_low" default="-1.8" />
     <arg name="trim_high" default="3" />
     <arg name="radius" default="25.0" />
@@ -27,10 +27,10 @@
 
 
 <!--manager-->
-    <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>
+<!--    <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>-->
 <!--nodelet-->
 <!-- same meaning param filed in two nodes must have same values-->
-    <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="load prm_localization/RealTime_Localization manager">
+    <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="standalone prm_localization/RealTime_Localization" output="screen">
         <remap from="/velodyne_points" to="$(arg points_topic)" />
         <param name="farPointThreshold" value="$(arg farPointThreshold)" />
         <param name="nearPointThreshold" value="$(arg nearPointThreshold)" />
@@ -42,12 +42,12 @@
         <param name="init_yaw" value="$(arg init_yaw)" />
         <param name="icpMaximumIterations" value="$(arg icpMaximumIterations)" />
         <param name="icpRANSACOutlierRejectionThreshold" value="$(arg icpRANSACOutlierRejectionThreshold)" />
-        <param name="icpTransformationEpsilon" value="$(arg icpTransformationEpsilon)" />
+        <param name="icpTransformaionEpsilon" value="$(arg icpTransformationEpsilon)" />
         <param name="map_tf" value="$(arg map_tf)" />
         <param name="base_lidar_tf" value="$(arg base_lidar_tf)" />
         <param name="downSampleSize" value="$(arg downsample_resolution)"  />
     </node>
-    <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager">
+    <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="standalone prm_localization/GlobalmapProviderNodelet" output="screen">
         <param name="use_GPU_ICP" value="$(arg use_GPU_ICP)"/>
         <param name="downsample_resolution" value="$(arg downsample_resolution)" />
         <param name="map_tf" value="$(arg map_tf)" />
@@ -62,7 +62,7 @@
 <!--    shen's node-->
 <!--    <node pkg="slamwithimu" type="slamimumode" name="mailun_node"/>-->
 <!--        <node pkg="syq_ekf" type="akermanslamlidarnode" name="karman_node"/>-->
-    <node pkg="ukf2" type="sukf2dslamlidarrealtimenode" name="ukf_node"/>
+<!--    <node pkg="ukf2" type="sukf2dslamlidarrealtimenode" name="ukf_node"/>-->
 </launch>
 <!--        output="screen"-->
 <!--    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>-->

@@ -1,36 +1,37 @@
 <?xml version="1.0"?>
 <launch>
 <!--argument-->
-    <arg name="points_topic" default="/lidar/vlp32_middle/PointCloud2" />
+    <arg name="points_topic" default="/velodyne_points" />
     <arg name="map_tf" default="odom" />
-    <arg name="base_lidar_tf" default="base_foot" />
+    <arg name="base_lidar_tf" default="velodyne" />
 <!--    <arg name="map_tf" default="map" />-->
 <!--    <arg name="base_lidar_tf" default="velodyne" />-->
 
-    <arg name="init_x" default="2.0" />
-    <arg name="init_y" default="1.2" />
-    <arg name="init_yaw" default="0.0" />
-    <arg name="trim_low" default="-1.8" />
-    <arg name="trim_high" default="3" />
+    <arg name="init_x" default="-4.37" /><!---4.37-->
+    <arg name="init_y" default="5.77" />
+    <arg name="init_yaw" default="-1.5708" />
+    <arg name="trim_low" default="-0.4" />
+    <arg name="trim_high" default="4.5" />
     <arg name="radius" default="25.0" />
-    <arg name="mapUpdateTime" default="6" />
-    <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/MAP_BAG/XJTU_underground_parkinglot/pcd/XJTU_mid_under.pcd" />
+    <arg name="mapUpdateTime" default="5" />
+    <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/MAP_BAG/yuyao/8_7/shunyu_factory_half.pcd" />
     <!--icp para-->
     <arg name="use_GPU_ICP" default="false"/>
-    <arg name="downsample_resolution" default="0.15" />
+    <arg name="downsample_resolution" default="0.1" />
     <arg name="icpMaximumIterations" default="30" />
     <arg name="icpRANSACOutlierRejectionThreshold" default="0.08" />
-    <arg name="icpTransformationEpsilon" default="1e-3" />
-    <!--    filter-->
+    <arg name="icpTransformationEpsilon" default="1e-5" />
+    <!--filter-->
     <arg name="farPointThreshold" default="20" />
-    <arg name="nearPointThreshold" default="1.3" />
+    <arg name="nearPointThreshold" default="0.98" />
 
 
 <!--manager-->
-    <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>
+    <node pkg="nodelet" type="nodelet" name="velodyne_nodelet_manager" args="manager" output="screen"/>
+    <arg name="manager" default="velodyne_nodelet_manager"/>
 <!--nodelet-->
 <!-- same meaning param filed in two nodes must have same values-->
-    <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="load prm_localization/RealTime_Localization manager">
+    <node pkg="nodelet" type="nodelet" name="rt_localization_nodelet" args="load prm_localization/RealTime_Localization $(arg manager)">
         <remap from="/velodyne_points" to="$(arg points_topic)" />
         <param name="farPointThreshold" value="$(arg farPointThreshold)" />
         <param name="nearPointThreshold" value="$(arg nearPointThreshold)" />
@@ -47,7 +48,7 @@
         <param name="base_lidar_tf" value="$(arg base_lidar_tf)" />
         <param name="downSampleSize" value="$(arg downsample_resolution)"  />
     </node>
-    <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet manager">
+    <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet $(arg manager)">
         <param name="use_GPU_ICP" value="$(arg use_GPU_ICP)"/>
         <param name="downsample_resolution" value="$(arg downsample_resolution)" />
         <param name="map_tf" value="$(arg map_tf)" />
@@ -59,10 +60,28 @@
         <param name="mapUpdateTime" value="$(arg mapUpdateTime)" />
         <param name="global_map_pcd_path" value="$(arg global_map_pcd_path)" />
     </node>
-<!--    shen's node-->
+<!--    imu_driver-->
+    <!-- parameters -->
+<!--    <arg name="device" default="auto" doc="device file of the IMU"/>-->
+<!--    <arg name="baudrate" default="0" doc="baudrate of the IMU"/>-->
+<!--    <arg name="timeout" default="0.002" doc="timeout for the IMU communication"/>-->
+<!--    <arg name="frame_id" default="base_footprint" doc="frame id of the IMU"/>-->
+<!--    <arg name="frame_local" default="ENU" doc="desired frame orientation (ENU, NED or NWU)"/>-->
+<!--    <arg name="no_rotation_duration" default="0" doc="duration (int in seconds) of the no-rotation calibration procedure"/>-->
+
+<!--    &lt;!&ndash; node &ndash;&gt;-->
+<!--    <node pkg="xsens_driver" type="mtnode.py" name="xsens_driver" output="screen" >-->
+<!--        <param name="device" value="$(arg device)"/>-->
+<!--        <param name="baudrate" value="$(arg baudrate)"/>-->
+<!--        <param name="timeout" value="$(arg timeout)"/>-->
+<!--        <param name="frame_id" value="$(arg base_lidar_tf)"/>-->
+<!--        <param name="frame_local" value="$(arg frame_local)"/>-->
+<!--        <param name="no_rotation_duration" value="$(arg no_rotation_duration)"/>-->
+<!--    </node>-->
+    <node pkg="ukf2" type="sukf2dslamlidarrealtimenode" name="ukf_node"/>
+    <!--    shen's node-->
 <!--    <node pkg="slamwithimu" type="slamimumode" name="mailun_node"/>-->
 <!--        <node pkg="syq_ekf" type="akermanslamlidarnode" name="karman_node"/>-->
-    <node pkg="ukf2" type="sukf2dslamlidarrealtimenode" name="ukf_node"/>
 </launch>
 <!--        output="screen"-->
 <!--    <node pkg="nodelet" type="nodelet" name="prm_localization_nodelet" args="load prm_localization/PRMLocalizationNodelet manager"/>-->
