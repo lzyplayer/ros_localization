@@ -17,11 +17,12 @@ template<typename TModel>//模型类型，参数是 类 名称
 class UnscentedKalmanFilter
 {
 public:
-    double lambda = -8;
+    double lambda = 1;
     typedef TModel Model;
-    UnscentedKalmanFilter(const typename TModel::ModelParameter& para)
-    :
-    model_parameter_(para)
+    // UnscentedKalmanFilter(const typename TModel::ModelParameter& para)
+    // :
+    // model_parameter_(para)
+    UnscentedKalmanFilter()
     {
         N = TModel::NumberState;//增广后
         S = 2 * N + 1;
@@ -35,10 +36,18 @@ public:
         }
     }
 
-    void init(double timestamp)//被调用
+    void setModelParameter(const typename TModel::ModelParameter& para)
+    {
+        model_parameter_ = para;
+    }
+
+    void init(double timestamp, double x, double y, double yaw)//被调用
     {
         identity_p_.setIdentity();//单位阵
         TModel::initState(model_parameter_, x_, P_);
+        x_(0) = x;
+        x_(1) = y;
+        x_(4) = yaw;
         timestamp_ = timestamp;
     }
 
@@ -80,9 +89,8 @@ public:
         Xsig_prediction.setZero();
         //generate sigma_point
         ensurePositiveFinite(P_);
-        GenerateSigmaPoints(x_, P_, Xsig);
-        // std::cout << "P:" << P_ << std::endl;
 
+        GenerateSigmaPoints(x_, P_, Xsig);
 
         //predict sigma_points
         for (int i = 0;  i < S; i++)
@@ -106,9 +114,9 @@ public:
         for (int i = 0; i < S; i++) 
         {
             VectorXd diff = Xsig_prediction.col(i) - x_;
-            if(i==0)  P_pred += (3+1/(N+lambda)) * diff * diff.transpose();
-            else  P_pred += weights(i) * diff * diff.transpose();
-        }                    
+            P_pred += weights(i) * diff * diff.transpose();
+        } 
+        
         P_pred += model_parameter_.process_noise;
         // std::cout << "xpre:" << x_pre << std::endl;
         ensurePositiveFinite(P_pred);
@@ -198,11 +206,10 @@ public:
             Zsig.row(i) = ext_sig.row(i + N);
         }
         ext_weights.resize(M, 1);
-        double lambda_ = -8-K;
-        ext_weights(0) = lambda_ / (N + K + lambda_);
+        ext_weights(0) = lambda / (N + K + lambda);
         for (int i = 1; i < M; i++) 
         {
-            ext_weights(i) = 1 / (2 * (N + K + lambda_));
+            ext_weights(i) = 1 / (2 * (N + K + lambda));
         }
         ext_sig_mean = VectorXd::Zero(N + K, 1);
         for (int i = 1; i < M; i++) 
@@ -226,9 +233,7 @@ public:
         for (int i = 0; i < M; i++) 
         {
             VectorXd diff = Zsig.col(i) - expected_measurement_mean;
-            // expected_measurement_cov += ext_weights[i] * diff * diff.transpose();
-            if(i==0)  expected_measurement_cov += (3+1/(N+lambda+K)) * diff * diff.transpose();
-            else  expected_measurement_cov += ext_weights(i) * diff * diff.transpose();
+            expected_measurement_cov += ext_weights(i) * diff * diff.transpose();
         }
             // calculated transformed covariance
         MatrixXd sigma = MatrixXd::Zero(N + K, K);
@@ -236,9 +241,7 @@ public:
         {
             auto diffA = (ext_sig.col(i) - ext_mean_pred);
             auto diffB = (Zsig.col(i) - expected_measurement_mean);
-            // sigma += ext_weights[i] * (diffA * diffB.transpose());
-            if(i==0)  sigma += (3+1/(N+lambda+K)) * (diffA * diffB.transpose());
-            else  sigma += ext_weights(i) * (diffA * diffB.transpose());
+            sigma += ext_weights(i) * (diffA * diffB.transpose());
         }
         kalman_gain = sigma * expected_measurement_cov.inverse();
 

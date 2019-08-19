@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ukf2)
+project(ukf)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -65,19 +65,10 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${ALGLIB_INCLUDE_DIRS})
 #add_dependencies(filter_base ${PROJECT_NAME}_gencpp)
 
 
-add_executable(sukf2dnode src/sukf2d.cpp)
-add_dependencies(sukf2dnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sukf2dnode ${catkin_LIBRARIES})
 
-# add_executable(sukf3dnode src/sukf3d.cpp)
-# add_dependencies(sukf3dnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(sukf3dnode ${catkin_LIBRARIES})
-
-add_executable(sukf2dslamlidarnode src/sukf2dslamlidar.cpp)
-add_dependencies(sukf2dslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sukf2dslamlidarnode ${catkin_LIBRARIES})
 
 add_executable(sukf2dslamlidarrealtimenode src/sukf2dslamlidarrealtime.cpp)
 add_dependencies(sukf2dslamlidarrealtimenode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(sukf2dslamlidarrealtimenode ${catkin_LIBRARIES})
+
 

@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <sstream>
 #include <iterator>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>/////////////////////tf2
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <chrono>
 #include <queue>
 #include <ros/ros.h>
@@ -48,51 +48,44 @@ AccelerationMeasurement g_imu_acceleration_measurement;
 PositionMeasurement g_slam_position_measurement;
 HeadingMeasurement g_slam_heading_measurement;
 VelocityMeasurement g_lidar_velocity_measurement;
+VelocityMeasurement g_slam_velocity_measurement;
 AngularvelocityMeasurement g_lidar_angularvelocity_measurement;
 
 bool g_slam_measurement_changed;
 bool g_lidar_measurement_changed;;
-
 bool inite_g_slam_measurement = false;
 bool inite_g_lidar_measurement = false;
 
-double rostimebegin;
-double rostimeend;
-double z_=0;
-int output_count_ = 0;
-
 //传感器本身给定的误差水平,也许可以改成自适应
 //SLAM信号弱情况下，要提高其不准确度，根据covar可以输出体现
-Eigen::MatrixXd covar_imuacc = Eigen::MatrixXd::Identity(2,2) * 0.01;
-double covar_imuang = 0.01;
-double covar_slamyaw = 0.1;
-Eigen::MatrixXd covar_slampos = Eigen::MatrixXd::Identity(2,2) * 0.1;
-double covar_lidarang=0.01;
-Eigen::MatrixXd covar_lidarvel = Eigen::MatrixXd::Identity(2,2) * 0.1;
-
-SModelParameter para;
-UnscentedKalmanFilter<SModel> g_filter_s(para);
-nav_msgs::Odometry odom;//封装
-ros::Publisher odom_s_pub;
+double cov_imuacc, cov_imuang, cov_slamyaw, cov_slampos, cov_slamvel, cov_lidarang, cov_lidarvel;
+double ppos, pv, pyaw, pa, pw;
+bool flag_linearacc;//去向心加速度
+bool flag_cali;//IMU系是否进行算法标定
+bool flag_slamv;//是否使用SLAM速度
 
 struct Zpre_lidar
 {
     double vx, vy, w;//获取时的预测,速度，角速度，位置，朝向
     double stamp;//时间，为了验证
 };
-
-
 queue<Zpre_lidar> M_lidar;
-
 Zpre_lidar n_lidar;
+
+nav_msgs::Odometry odom;//封装
+ros::Publisher odom_s_pub;
+
+UnscentedKalmanFilter<SModel> g_filter_s;
 decltype(g_filter_s)::Model::FilterVector outputstate_s_;//实时输出
-decltype(g_filter_s)::Model::FilterVector state_;//雷达第二帧状态
+
+int N = 0;
+double rostimebegin, rostimeend;
+int output_count_ = 0;
+double z_=0;
+
 double delta_;
 double t2_;
-int N= 0;
 double timestamp_old;
-bool flag_cali = false;//IMU系矫正
-bool flag_linearacc = false;//去向心加速度
 Eigen::Matrix<double, 2, 1> measurement1_lidar;//v
 Eigen::Matrix<double, 1, 1> measurement2_lidar;//w
 
@@ -103,42 +96,27 @@ boost::mutex inputmutex;//////////
 
 Eigen::IOFormat eigen_csv_format(Eigen::FullPrecision, Eigen::DontAlignCols, "," , "," , "" , "" , "", "");
 
-
 void SlamCallback(const nav_msgs::OdometryConstPtr& input)
-{
-    // {
-    //     N = N + 1;  
-    //     if(N > 500 && N < 600)//丢失5s左右
-    //     {
-    //         std::cout << "断掉GPS，算法还准吗" << std::endl;
-    //         return;
-    //     }
-    // }
-
+{   cout<<"SlamCallback"<<endl;
     double timestamp = input->header.stamp.toSec();
-    if(!inite)//模型初始化
-    {
-        g_filter_s.init(timestamp);
-        inite = true;
-    }
-    else
     {
         double a = input->pose.pose.position.x;
         if(!std::isnan(a))//判断是否是nan
         {
-            inite_g_slam_measurement = true;//GPS测量
-
+            //pos
             Eigen::Matrix<double, 2, 1> measurement;
-
             measurement << input->pose.pose.position.x, input->pose.pose.position.y;
             Eigen::Matrix<double, 2, 2> covariance;
-            covariance = covar_slampos;
+            covariance = Eigen::MatrixXd::Identity(2,2) * cov_slampos;
             z_ = input->pose.pose.position.z;
             // double cov = input->pose.covariance[0]/input->pose.covariance[1] * 0.1;//比例设定，适配于整个系统
             // covariance << cov, 0,
             // 0,cov;
             g_slam_position_measurement.setMeasurement(measurement, covariance, timestamp);
 
+cout<<"SlamCallback1"<<endl;
+
+            //yaw
             geometry_msgs::Quaternion orientation;
             orientation.x = input->pose.pose.orientation.x;
             orientation.y = input->pose.pose.orientation.y;
@@ -148,17 +126,32 @@ void SlamCallback(const nav_msgs::OdometryConstPtr& input)
             tf2::fromMsg(orientation, orientation_quat);
             double roll, pitch, yaw;
             tf2::Matrix3x3 orTmp(orientation_quat);
-            orTmp.getRPY(roll, pitch, yaw);
-
+            orTmp.getRPY(roll, pitch, yaw);            
             Eigen::Matrix<double, 1, 1> measurement1;
             measurement1 << yaw;
             Eigen::Matrix<double, 1, 1> covariance1;
-            covariance1 << covar_slamyaw;
+            covariance1 << cov_slamyaw;
             g_slam_heading_measurement.setMeasurement(measurement1, covariance1, timestamp);
 
+            //v
+            if(flag_slamv)
+            {
+                measurement << input->twist.twist.linear.x, input->twist.twist.linear.y;
+                covariance = Eigen::MatrixXd::Identity(2,2) * cov_slamvel;
+                g_slam_velocity_measurement.setMeasurement(measurement, covariance, timestamp);
+            }
+
+            if(N == 0)  
+            {
+                g_filter_s.init(timestamp, input->pose.pose.position.x, input->pose.pose.position.y, yaw);
+                inite = true;
+                inite_g_slam_measurement = true;
+                N += 1;
+            }
             g_slam_measurement_changed = true;
         }
     }
+    cout<<"SlamCallback_end"<<endl;
 }
 void LidarsigCallback(const nav_msgs::OdometryConstPtr& input)//记录状态信息
 {
@@ -196,7 +189,8 @@ void LidarCallback(const nav_msgs::OdometryConstPtr& input)// 处理演化过程
     timestamp_old = input->header.stamp.toSec();//点云获取时间
     if(!inite)//模型初始化
     {
-        g_filter_s.init(timestamp);
+        // g_filter_s.init(timestamp);
+        return;
         inite = true;
     }
     else
@@ -261,14 +255,14 @@ void LidarCallback(const nav_msgs::OdometryConstPtr& input)// 处理演化过程
                 vy = X_*sin(outputstate_s_(4)) + Y_*cos(outputstate_s_(4));///IMU系
                 measurement << vx - n.vx, vy - n.vy;
                 Eigen::Matrix<double, 2, 2> covariance;
-                covariance = covar_lidarvel;
+                covariance = Eigen::MatrixXd::Identity(2,2) * cov_lidarvel;
                 g_lidar_velocity_measurement.setMeasurement(measurement, covariance, timestamp);
                 measurement1_lidar = measurement;
 
                 Eigen::Matrix<double, 1, 1> measurement1;
                 measurement1 << yaw/delta - n.w;
                 Eigen::Matrix<double, 1, 1> covariance1;
-                covariance1 << covar_lidarang;
+                covariance1 << cov_lidarang;
                 g_lidar_angularvelocity_measurement.setMeasurement(measurement1, covariance1, timestamp);
                 measurement2_lidar = measurement1;
                 
@@ -279,8 +273,7 @@ void LidarCallback(const nav_msgs::OdometryConstPtr& input)// 处理演化过程
 }
 void imuCallback(const sensor_msgs::ImuConstPtr& input)
 {
-    // cout << "imu" << endl;
-    rostimebegin = ros::Time::now().toSec();///////////////////////////////////////////////////////////////////////////////////////////////时间对齐
+    rostimebegin = ros::Time::now().toSec();
 
     bool imuinite = true;
     double timestamp = input->header.stamp.toSec();
@@ -289,40 +282,40 @@ void imuCallback(const sensor_msgs::ImuConstPtr& input)
         if(!inite)
         {
             imuinite = false;
-            g_filter_s.init(timestamp);
-            inite = true;
         }
         else
         {
+            //w
             Eigen::Matrix<double, 1, 1> angularvelocitymeasurement;
             angularvelocitymeasurement << input->angular_velocity.z;
             Eigen::Matrix<double, 1, 1> angularvelocitycovariance;
-            angularvelocitycovariance << covar_imuang;
-
+            angularvelocitycovariance << cov_imuang;
             g_imu_angularvelocity_measurement.setMeasurement(angularvelocitymeasurement, angularvelocitycovariance, timestamp);
 
+            //a
             Eigen::Matrix<double, 2, 1> accelerationmeasurement;
-            accelerationmeasurement << input->linear_acceleration.x, input->linear_acceleration.y; 
+            accelerationmeasurement << input->linear_acceleration.x, input->linear_acceleration.y;
+
             if(flag_linearacc)
             {
                 Eigen::Matrix<double, 2, 1> V;
                 V << outputstate_s_(3), -outputstate_s_(2);
                 accelerationmeasurement += angularvelocitymeasurement(0) * V;
             }
-            // if (flag_cali)  
-            // {
-            //     Eigen::Matrix<double, 2, 2> C2;
-            //     C2 << 0, -1,
-            //           -1, 0;
-            //     accelerationmeasurement = C2 * accelerationmeasurement;
-            // }
-            Eigen::Matrix<double, 2, 2> accelerationcovariance;
-            accelerationcovariance = covar_imuacc;
+            if (flag_cali)  
+            {
+                Eigen::Matrix<double, 2, 2> C2;
+                C2 << 0, -1,
+                      -1, 0;
+                accelerationmeasurement = C2 * accelerationmeasurement;
+            }
 
+            Eigen::Matrix<double, 2, 2> accelerationcovariance;
+            accelerationcovariance = Eigen::MatrixXd::Identity(2,2) * cov_imuacc;
             g_imu_acceleration_measurement.setMeasurement(accelerationmeasurement, accelerationcovariance, timestamp);
         }
     }
-    if(imuinite && inite_g_slam_measurement)// && inite_g_slam_heading_measurement)
+    if(imuinite && inite_g_slam_measurement)
     {
         update(timestamp, stamp);
     }
@@ -331,11 +324,10 @@ void imuCallback(const sensor_msgs::ImuConstPtr& input)
 
 void update(double timestamp, ros::Time stamp)//来什么量测，用什么来更新
 {
-    // cout << "fine" << endl;
     bool use_slam = g_slam_measurement_changed;
     bool use_lidar = g_lidar_measurement_changed;
 
-    boost::mutex::scoped_lock lock(inputmutex);////////////////////////////////////////////////////////////////////////////////////////////////////
+    boost::mutex::scoped_lock lock(inputmutex);
     {
         int total_length_s = 0;//先统计这次更新用多少维
         total_length_s += decltype(g_filter_s)::getLengthForMeasurement<AccelerationMeasurement>();
@@ -344,6 +336,7 @@ void update(double timestamp, ros::Time stamp)//来什么量测，用什么来�
         {
             total_length_s += decltype(g_filter_s)::getLengthForMeasurement<PositionMeasurement>();
             total_length_s += decltype(g_filter_s)::getLengthForMeasurement<HeadingMeasurement>();
+            if(flag_slamv) total_length_s += decltype(g_filter_s)::getLengthForMeasurement<VelocityMeasurement>();
         }
         if(use_lidar) 
         {
@@ -360,6 +353,7 @@ void update(double timestamp, ros::Time stamp)//来什么量测，用什么来�
         {
             g_filter_s.AddMeasurement(g_slam_position_measurement);
             g_filter_s.AddMeasurement(g_slam_heading_measurement);
+            if(flag_slamv) g_filter_s.AddMeasurement(g_slam_velocity_measurement);
         }
         if(use_lidar)//对量测进行二次推演，改变
         {            
@@ -386,6 +380,7 @@ void update(double timestamp, ros::Time stamp)//来什么量测，用什么来�
         if(use_slam) 
         {
             g_filter_s.AddMeasurement2(g_slam_position_measurement);
+            if(flag_slamv) g_filter_s.AddMeasurement2(g_slam_velocity_measurement);
             g_filter_s.AddMeasurement2(g_slam_heading_measurement);
         }
         if(use_lidar)
@@ -405,10 +400,11 @@ void update(double timestamp, ros::Time stamp)//来什么量测，用什么来�
     g_filter_s.endAddMeasurement(outputstate_s, outputcovariance_s, outputtime_s);//最终估计结果
     cout << "outputstate_s" << outputstate_s <<endl;
     outputstate_s_ = outputstate_s;
+
     nav_msgs::Odometry odom_s;//封装
     odom_s.header.stamp = odom.header.stamp;
-    odom_s.header.frame_id = "odom";
-    odom_s.child_frame_id = "base_foot";
+    odom_s.header.frame_id = "odom_world";
+    odom_s.child_frame_id = "base_foot_frame";
     odom_s.pose.pose.position.x = outputstate_s(0);
     odom_s.pose.pose.position.y = outputstate_s(1);
     odom_s.pose.pose.position.z = z_;
@@ -449,12 +445,34 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "sukf2dslam");
     ros::NodeHandle node;
 
-    odom_s_pub = node.advertise<nav_msgs::Odometry>("/sukf2dslamodometry", 10000);//pub出估计的结果
-   
-    //ros::Subscriber SLAMPOS_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/fixtoodometry", 10000, slamCallback);//10hz
-    ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/IMU_Xsens_RS232/raw_acceleration", 10, imuCallback);//200hz
-    // ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/raw_acceleration", 10, imuCallback);//200hz
-    ros::Subscriber SLAMPOS_sub = node.subscribe("/odom", 10000, SlamCallback);//10hz  lp_odom
+    cov_slampos = node.param<double>("cov_slampos", 0.01);
+    cov_slamyaw = node.param<double>("cov_slamyaw", 0.01);
+    cov_slamvel = node.param<double>("cov_slamvel", 0.1);
+    cov_imuacc = node.param<double>("cov_imuacc", 0.1);
+    cov_imuang = node.param<double>("cov_imuang", 0.1);
+    cov_lidarang = node.param<double>("cov_lidarang", 0.1);
+    cov_lidarvel = node.param<double>("cov_lidarvel", 0.1);
+
+    flag_linearacc = node.param<bool>("flag_linearacc", false);
+    flag_slamv = node.param<bool>("flag_slamv", false);
+    flag_cali = node.param<bool>("flag_cali", false);
+
+    ppos = node.param<double>("ppos", 0.05);
+    pv = node.param<double>("pv", 0.05);
+    pyaw = node.param<double>("pyaw", 0.02);
+    pa = node.param<double>("pa", 1);
+    pw = node.param<double>("pw", 0.05);
+
+    SModelParameter para(ppos, pv, pyaw, pa, pw);
+    g_filter_s.setModelParameter(para);
+
+    odom_s_pub = node.advertise<nav_msgs::Odometry>("/sukf2dslamrealodometry", 10000);//pub出估计的结果
+
+    ros::Subscriber IMU_sub = node.subscribe("/odometry", 10, imuCallback);//200hz
+//    ros::Subscriber IMU_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/raw_acceleration", 10, imuCallback);//200hz
+    ros::Subscriber SLAMPOS_sub = node.subscribe("/regis_in_odom", 10000, SlamCallback);//10hz
+    // ros::Subscriber SLAMPOS_sub = node.subscribe("/pioneer_sensors/EKF_Localization_RS232/filteredodometry", 10000, SlamCallback);//10hz
+    // ros::Subscriber SLAMPOS_sub = node.subscribe("/odometry", 10000, SlamCallback);//10hz
     ros::Subscriber LIDAR_sub = node.subscribe("/lidar_odom", 10000, LidarCallback);//10hz
     ros::Subscriber LIDARSIG_sub = node.subscribe("/lidar_stamp", 10000, LidarsigCallback);//10hz
     ros::spin();//循环

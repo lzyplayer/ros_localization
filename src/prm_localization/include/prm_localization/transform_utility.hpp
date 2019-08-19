@@ -61,6 +61,7 @@ nav_msgs::Odometry rotm2odometry(const Eigen::Matrix4f& pose ,const ros::Time& s
 }
 Matrix4f odom2rotm(const nav_msgs::OdometryConstPtr& odom_msg){
     Matrix4f m4f;
+    m4f.setIdentity();
     Quaternionf qf;
     m4f(0,3) = odom_msg->pose.pose.position.x;
     m4f(1,3) = odom_msg->pose.pose.position.y;
