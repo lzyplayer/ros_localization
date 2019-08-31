@@ -5,6 +5,7 @@
 #include "ekf_core/models/ctra.hpp"
 #include "ekf_core/models/akerman.hpp"
 #include "ekf_core/models/bicycle.hpp"
+#include "ekf_core/models/bicyclelr.hpp"
 
 class AngularvelocityMeasurement : public SensorMeasurementBase<1>
 {
@@ -28,7 +29,9 @@ namespace SensorMeasurementConverter
     template<>
     struct is_support<AngularvelocityMeasurement, BICYCLEModel> : std::true_type {};
 
-    
+    template<>
+    struct is_support<AngularvelocityMeasurement, BICYCLELRModel> : std::true_type {};
+
     template<>
     void getMeasurementJacobian<AngularvelocityMeasurement, AKERMANModel>(
         const typename AKERMANModel::ModelParameter& parameter,
@@ -89,6 +92,26 @@ namespace SensorMeasurementConverter
     )
     {
         measurement << (state(4) * sin(state(3)))/parameter.lr;
+    }
+
+    template<>
+    void getMeasurementJacobian<AngularvelocityMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        Eigen::Matrix<double, AngularvelocityMeasurement::NumberMeasurement, BICYCLELRModel::NumberState>& H
+    )
+    {
+        H << 0, 0, -(state(5) * sin(state(4)))/(state(2) * state(2)), 0, (state(5) * cos(state(4)))/state(2), sin(state(4))/state(2), 0;
+    }
+
+    template<>
+    void getMeasurementPrediction<AngularvelocityMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        typename AngularvelocityMeasurement::MeasurementVector& measurement
+    )
+    {
+        measurement << (state(5) * sin(state(4)))/state(2);
     }
 
 }

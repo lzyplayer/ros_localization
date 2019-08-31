@@ -28,6 +28,16 @@ public:
         timestamp_ = timestamp;
     }
 
+    void initnew(double timestamp, double x, double y, double yaw)//被调用
+    {
+        identity_p_.setIdentity();//单位阵
+        TModel::initState(model_parameter_, state_, state_covariance_);
+        state_(0) = x;
+        state_(1) = y;
+        state_(2) = yaw;
+        timestamp_ = timestamp;
+    }
+
     void beginAddMeasurement(double timestamp, int total_length, bool flag)//当前测量的变量数
     {
         if(is_adding_measurement_) throw;
@@ -122,7 +132,7 @@ public:
         stack_index_ += TMeasurement::NumberMeasurement;
     }
 
-    void endAddMeasurement(typename TModel::FilterVector& state, typename TModel::FilterMatrix& state_covariance, double& time)
+    void endAddMeasurement(typename TModel::FilterVector& state, typename TModel::FilterMatrix& state_covariance, double& time, bool& flag_zero)
     {
         if(!is_adding_measurement_) throw;
         if(stack_index_ != total_length_) throw;
@@ -138,7 +148,7 @@ public:
         // Check if S_inv is positive defined
         if(!isMatrixPositiveDefined(residual_covariance_inverse_))
         {
-            std::cout << "residual_covariance_inverse_ is not semi-positive definitie, possible error" << std::endl;
+            ROS_ERROR("residual_covariance_inverse_ is not semi-positive definitie, possible error");
         }
         // v = z-z_p
         measurement_residual_ = measurement_stack_ - estimated_measurement_stack_;
@@ -168,11 +178,16 @@ public:
         // Check if P(k+1|k+1) is positive defined
         if(!isMatrixPositiveDefined(state_covariance_))
         {
-            std::cout << "state_covariance_ is not semi-positive definitie, possible error" << std::endl;
+            ROS_ERROR("state_covariance_ is not semi-positive definitie, possible error");
+        }
+        if(flag_zero) 
+        {
+            state_(3) = 0.0;
+            flag_zero = false;
         }
         state = state_;
         state_covariance = state_covariance_;
-        W_=filter_gain_;
+        W_ = filter_gain_;
 
         time = timestamp_;
     }
@@ -185,8 +200,8 @@ public:
         return llt.info() == Eigen::Success;
     }
 
-    // supporting function
-    inline double normalizeAngle(const double raw_angle) const//象限问题
+public:
+    double normalizeAngle(const double raw_angle)//象限问题
     {
         int n = 0;
         double angle = 0;

@@ -5,6 +5,7 @@
 #include "ekf_core/models/ctra.hpp"
 #include "ekf_core/models/akerman.hpp"
 #include "ekf_core/models/bicycle.hpp"
+#include "ekf_core/models/bicyclelr.hpp"
 
 class AccelerationMeasurement : public SensorMeasurementBase<1>
 {
@@ -27,6 +28,9 @@ namespace SensorMeasurementConverter
 
     template<>
     struct is_support<AccelerationMeasurement, BICYCLEModel> : std::true_type {};
+
+    template<>
+    struct is_support<AccelerationMeasurement, BICYCLELRModel> : std::true_type {};
 
     
     template<>
@@ -79,12 +83,10 @@ namespace SensorMeasurementConverter
         Eigen::Matrix<double, AccelerationMeasurement::NumberMeasurement, BICYCLEModel::NumberState>& H
     )
     {
-        const double& T_ = state(2);
         const double& B_ = state(3);
-        const double& V_ = state(4);
         const double& A_ = state(5);
 
-        double LR_ = parameter.lr;
+
 
         H << 0, 0, 0, -A_ * sin(B_), 0, cos(B_);
     }
@@ -96,13 +98,35 @@ namespace SensorMeasurementConverter
         typename AccelerationMeasurement::MeasurementVector& measurement
     )
     {
-        const double& T_ = state(2);
         const double& B_ = state(3);
-        const double& V_ = state(4);
         const double& A_ = state(5);
-        
-        double LR_ = parameter.lr;
 
+
+        measurement << A_ * cos(B_);//测量的是实际加速度在车轴方向的一个分量，在2D情况下
+    }
+
+    template<>
+    void getMeasurementJacobian<AccelerationMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        Eigen::Matrix<double, AccelerationMeasurement::NumberMeasurement, BICYCLELRModel::NumberState>& H
+    )
+    {
+        const double& B_ = state(4);
+        const double& A_ = state(6);
+
+        H << 0, 0, 0, 0, -A_ * sin(B_), 0, cos(B_);
+    }
+
+    template<>
+    void getMeasurementPrediction<AccelerationMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        typename AccelerationMeasurement::MeasurementVector& measurement
+    )
+    {
+        const double& B_ = state(4);
+        const double& A_ = state(6);
         measurement << A_ * cos(B_);//测量的是实际加速度在车轴方向的一个分量，在2D情况下
     }
 

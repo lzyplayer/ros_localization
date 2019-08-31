@@ -30,6 +30,24 @@ public:
         FilterMatrix& jacobian,
         FilterMatrix& process_noise
     );
+    static double NormalizeAngle(
+        const double raw_angle
+    )
+    {
+        int n = 0;
+        double angle = 0;
+        n = raw_angle/(3.141592653 * 2);
+        angle = raw_angle - (3.141592653 * 2) * n;
+        if(angle > 3.141592653)
+        {
+            angle = angle - (3.141592653 * 2);
+        }else if(angle <= -3.141592653)
+        {
+            angle = angle + (3.141592653 * 2);
+        }
+
+        return angle;
+    };
 };
 
 #endif

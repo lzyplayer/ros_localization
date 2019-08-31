@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(syq_ekf)
+project(ekf)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  tf
   tf2
   tf2_geometry_msgs
   tf2_ros
@@ -24,8 +25,6 @@ find_package(catkin REQUIRED COMPONENTS
 # message("!!!!!!!!!!")
 # message("${EIGEN3_INCLUDE_DIR}")
 # message("!!!!!!!!!!")
-
-set(EIGEN_PACKAGE EIGEN3)
 
 #roslint_cpp()
 
@@ -41,6 +40,7 @@ catkin_package(
     roscpp
     sensor_msgs
     std_msgs
+    tf
     tf2
     tf2_geometry_msgs
     tf2_ros
@@ -65,26 +65,13 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 # Executables
 
-add_executable(bicycleslamlidarnode src/bicycleslamlidar.cpp)
-add_dependencies(bicycleslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_executable(akermanslamlidarnode src/akermanslamlidar.cpp)
-add_dependencies(akermanslamlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_executable(akermanlidarnode src/akermangpslidar.cpp)
-add_dependencies(akermanlidarnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_executable(akermangpsnode src/akermangps.cpp)
-add_dependencies(akermangpsnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_executable(akermannode src/akerman_un.cpp)
-add_dependencies(akermannode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_executable(bicyclenode src/bicycle_un.cpp)
-add_dependencies(bicyclenode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_executable(akermangpsvelnode src/akermangpsvel.cpp)
-add_dependencies(akermangpsvelnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(bicycleslamnode src/bicycleslam.cpp)
+add_dependencies(bicycleslamnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bicycleslamnode ${catkin_LIBRARIES})
 
+add_executable(akermanslamnode src/akermanslam.cpp)
+add_dependencies(akermanslamnode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(akermanslamnode ${catkin_LIBRARIES})
+# target_link_libraries(bicyclelrslamlidarnode ${catkin_LIBRARIES})
 
-target_link_libraries(bicycleslamlidarnode ${catkin_LIBRARIES})
-target_link_libraries(akermanslamlidarnode ${catkin_LIBRARIES})
-target_link_libraries(akermanlidarnode ${catkin_LIBRARIES})
-target_link_libraries(akermangpsnode ${catkin_LIBRARIES})
-target_link_libraries(akermangpsvelnode ${catkin_LIBRARIES})
-target_link_libraries(akermannode ${catkin_LIBRARIES})
-target_link_libraries(bicyclenode ${catkin_LIBRARIES})
+# target_link_libraries(bicyclelrnode ${catkin_LIBRARIES})

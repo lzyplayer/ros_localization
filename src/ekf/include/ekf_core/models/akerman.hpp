@@ -2,13 +2,16 @@
 #define MODELS_AKERMAN_HPP
 
 #include "ekf_core/kalman_filter_model_base.hpp"
-
+/**
+ * x,y,fai,v,w,a
+ * 二维绝对位置，朝向，实际前进车速，角速度，实际前进加速度
+ */
 struct AKERMANModelParameter : KalmanFilterModelParameterBase//结构体的继承，默认公有继承
 {
     AKERMANModelParameter()
     {
-        this->sigma2_omega = 1;
-        this->sigma2_a = 1;
+        this->sigma2_omega = 0.01;
+        this->sigma2_a = 0.1;
         this->L=2.85;//前后轮距
         this->W=1.59424;//左右轮距
         this->R_w=0.356;//轮胎半径
@@ -43,7 +46,7 @@ public:
         state << 0, 0, 0, 0.1, 0.01, 0;
         for(int i=0; i<6; i++)
         {
-            state_covariance(i,i) = 99;//P
+            state_covariance(i,i) = 0.01;//P
         }
     }
 

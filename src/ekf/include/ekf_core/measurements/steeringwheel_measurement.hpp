@@ -5,6 +5,7 @@
 #include "ekf_core/models/ctra.hpp"
 #include "ekf_core/models/akerman.hpp"
 #include "ekf_core/models/bicycle.hpp"
+#include "ekf_core/models/bicyclelr.hpp"
 
 class SteeringwheelangleMeasurement : public SensorMeasurementBase<1>
 {
@@ -13,7 +14,7 @@ public:
         MeasurementFlagVector& angle_flag
     ) const override final
     {
-        angle_flag << 0;
+        angle_flag << 1;
     }
 };
 
@@ -27,6 +28,9 @@ namespace SensorMeasurementConverter
 
     template<>
     struct is_support<SteeringwheelangleMeasurement, BICYCLEModel> : std::true_type {};
+
+    template<>
+    struct is_support<SteeringwheelangleMeasurement, BICYCLELRModel> : std::true_type {};
 
     template<>
     void getMeasurementJacobian<SteeringwheelangleMeasurement, AKERMANModel>(
@@ -95,6 +99,28 @@ namespace SensorMeasurementConverter
     {
         measurement << atan2((parameter.lf + parameter.lr) * sin(state(3)), parameter.lr * cos(state(3)));
         
+    }
+
+    template<>
+    void getMeasurementJacobian<SteeringwheelangleMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        Eigen::Matrix<double, SteeringwheelangleMeasurement::NumberMeasurement, BICYCLELRModel::NumberState>& H
+    )
+    {
+        double lr = state(2);
+        double beta = state(4);
+        H << 0, 0, -(cos(beta) * parameter.l * sin(beta))/(lr * lr * cos(beta) * cos(beta) + parameter.l * parameter.l * sin(beta) * sin(beta)), 0, (lr * parameter.l)/(lr * lr * cos(beta) * cos(beta) + parameter.l * parameter.l * sin(beta) * sin(beta)), 0, 0;
+    }
+
+    template<>
+    void getMeasurementPrediction<SteeringwheelangleMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        typename SteeringwheelangleMeasurement::MeasurementVector& measurement
+    )
+    {
+        measurement << atan2(parameter.l * sin(state(4)), state(2) * cos(state(4)));
     }
 }
 

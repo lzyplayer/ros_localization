@@ -7,6 +7,7 @@
 #include "ekf_core/sensor_measurement_base.hpp"
 #include "ekf_core/models/ctra.hpp"
 #include "ekf_core/models/akerman.hpp"
+#include "ekf_core/models/bicyclelr.hpp"
 #include "ekf_core/models/bicycle.hpp"
 
 
@@ -32,6 +33,8 @@ namespace SensorMeasurementConverter
     template<>
     struct is_support<VelocityMeasurement, BICYCLEModel> : std::true_type {};
 
+    template<>
+    struct is_support<VelocityMeasurement, BICYCLELRModel> : std::true_type {};
 
     template<>
     void getMeasurementJacobian<VelocityMeasurement, AKERMANModel>(
@@ -93,6 +96,26 @@ namespace SensorMeasurementConverter
     )
     {
         measurement << state(4) * cos(state(3));
+    }
+
+    template<>
+    void getMeasurementJacobian<VelocityMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        Eigen::Matrix<double, VelocityMeasurement::NumberMeasurement, BICYCLELRModel::NumberState>& H
+    )
+    {
+        H << 0, 0, 0, 0, -state(5) * sin(state(4)), cos(state(4)), 0;
+    }
+
+    template<>
+    void getMeasurementPrediction<VelocityMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        typename VelocityMeasurement::MeasurementVector& measurement
+    )
+    {
+        measurement << state(5) * cos(state(4));
     }
 }
 

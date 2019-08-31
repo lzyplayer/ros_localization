@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<launch>
+<!--argument-->
+  <arg name="slam_topic" default="/odom" />
+  <!-- default="odom_world" -->
+  <arg name="frame_id" default="odom_world" />
+  <arg name="child_frame_id" default="base_foot_frame" />
+  <!-- model param -->
+  <arg name="lr" default="1.5" />
+  <arg name="K" default="14" />
+  <arg name="per" default="0.99" />
+  <!-- Matrix R -->
+  <arg name="cov_slampos" default="0.01" />
+  <arg name="cov_slamyaw" default="0.1" />
+  <arg name="cov_slamvel" default="0.1" />
+  <arg name="cov_imuacc" default="0.1" />
+  <arg name="cov_imuang" default="0.1" />
+  <arg name="cov_swang" default="0.04" />  
+  <arg name="cov_wheel" default="0.5" />  
+  <!-- Matrix Q -->
+  <!-- <arg name="pbeta" default="1" />
+  <arg name="pa" default="5" /> -->
+    <!-- Matrix Q for akerman-->
+  <arg name="pbeta" default="10" />
+  <arg name="pa" default="30" />
+  <!-- 是否后续去除向心加速度 -->
+  <arg name="flag_linearacc" default="false" />
+  <!-- 是否使用SLAM速度 -->
+  <arg name="flag_slamv" default="false" />
+  <!-- 是否后续进行加速度标定 -->
+  <arg name="flag_cali_imu" default="false" />
+  <!-- true代表激光输出INS系,EKF直接输出 -->
+  <arg name="flag_slam_insout" default="false" />
+  <!-- 使用方向盘转角信息 -->
+  <arg name="use_swhang" default="false" />
+ 
+
+<!-- node -->	    <!-- output="screen" -->
+  <!-- <node pkg="ekf" type="bicycleslamnode" name="ekfbicyclenode" output="screen"> 
+	    <remap from="/odometry" to="$(arg slam_topic)" />
+	    <param name="frame_id" value="$(arg frame_id)"/>
+	    <param name="child_frame_id" value="$(arg child_frame_id)"/>
+
+	    <param name="cov_slampos" value="$(arg cov_slampos)"/>
+	    <param name="cov_slamyaw" value="$(arg cov_slamyaw)"/>
+	    <param name="cov_slamvel" value="$(arg cov_slamvel)"/>
+	    <param name="cov_imuacc" value="$(arg cov_imuacc)"/>
+	    <param name="cov_imuang" value="$(arg cov_imuang)"/>
+	    <param name="cov_swang" value="$(arg cov_swang)"/>
+	    <param name="cov_wheel" value="$(arg cov_wheel)"/>
+	    <param name="pbeta" value="$(arg pbeta)"/>
+	    <param name="pa" value="$(arg pa)"/>
+	    <param name="lr" value="$(arg lr)"/>
+	    <param name="flag_linearacc" value="$(arg flag_linearacc)"/>
+	    <param name="flag_slamv" value="$(arg flag_slamv)"/>
+	    <param name="flag_cali_imu" value="$(arg flag_cali_imu)"/>
+	    <param name="flag_slam_insout" value="$(arg flag_slam_insout)"/>
+	    <param name="K" value="$(arg K)"/>
+  </node> -->
+  <node pkg="ekf" type="akermanslamnode" name="ekfakermannode" output="screen" > 
+	    <remap from="/odometry" to="$(arg slam_topic)" />
+	    <param name="frame_id" value="$(arg frame_id)"/>
+	    <param name="child_frame_id" value="$(arg child_frame_id)"/>
+
+	    <param name="cov_slampos" value="$(arg cov_slampos)"/>
+	    <param name="cov_slamyaw" value="$(arg cov_slamyaw)"/>
+	    <param name="cov_slamvel" value="$(arg cov_slamvel)"/>
+	    <param name="cov_imuacc" value="$(arg cov_imuacc)"/>
+	    <param name="cov_imuang" value="$(arg cov_imuang)"/>
+	    <param name="cov_swang" value="$(arg cov_swang)"/>
+	    <param name="cov_wheel" value="$(arg cov_wheel)"/>
+	    <param name="pbeta" value="$(arg pbeta)"/>
+	    <param name="pa" value="$(arg pa)"/>
+	    <param name="flag_linearacc" value="$(arg flag_linearacc)"/>
+	    <param name="flag_slamv" value="$(arg flag_slamv)"/>
+	    <param name="flag_cali_imu" value="$(arg flag_cali_imu)"/>
+	    <param name="use_swhang" value="$(arg use_swhang)"/>
+	    <param name="K" value="$(arg K)"/>
+	    <param name="per" value="$(arg per)"/>
+  </node>
+</launch>
+<!-- 
+  tips for using .launch by midou
+  不使用launch打开时，参数用的是cpp文件中获取时的默认值
+  使用launch打开时，参数用的是launch中的default取值
+  命令行可修改launch的default，也可以直接修改launch文件，无需重新编译
+  其他launch文件也可以修改本launch文件的参数
+  	eg:
+        <include file="$(find ekf)/launch/ekf.launch">
+            <arg name="frame_id" value="$(arg map_tf)" />
+            <arg name="child_frame_id" value="$(arg base_lidar_tf)" />
+        </include>
+  cpp文件中要使用私有句柄获取参数值
+  <> 与 </>的区别
+ -->

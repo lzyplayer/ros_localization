@@ -5,6 +5,7 @@
 #include "ekf_core/models/ctra.hpp"
 #include "ekf_core/models/akerman.hpp"
 #include "ekf_core/models/bicycle.hpp"
+#include "ekf_core/models/bicyclelr.hpp"
 
 class PositionMeasurement : public SensorMeasurementBase<2>
 {
@@ -27,6 +28,9 @@ namespace SensorMeasurementConverter
 
     template<>
     struct is_support<PositionMeasurement, BICYCLEModel> : std::true_type {};
+
+    template<>
+    struct is_support<PositionMeasurement, BICYCLELRModel> : std::true_type {};
 
     template<>
     void getMeasurementJacobian<PositionMeasurement, AKERMANModel>(
@@ -81,8 +85,6 @@ namespace SensorMeasurementConverter
         Eigen::Matrix<double, PositionMeasurement::NumberMeasurement, BICYCLEModel::NumberState>& H
     )/////////////////////////////////////////////////////////////////////////////////////
     {
-        // H << 1, 0, parameter.lr * sin(state(2)), 0, 0, 0,
-        //      0, 1, -parameter.lr * cos(state(2)), 0, 0, 0;
         H << 1, 0, 0, 0, 0, 0,
              0, 1, 0, 0, 0, 0;
     }
@@ -95,7 +97,30 @@ namespace SensorMeasurementConverter
     )
     {
         measurement << state(0), state(1);
-        // measurement << state(0) - parameter.lr * cos(state(2)), state(1) - parameter.lr * sin(state(2));
+    }
+
+    template<>
+    void getMeasurementJacobian<PositionMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        Eigen::Matrix<double, PositionMeasurement::NumberMeasurement, BICYCLELRModel::NumberState>& H
+    )
+    {
+        // H << 1, 0, -cos(state(3)), state(2) * sin(state(3)), 0, 0, 0,
+        //      0, 1, -sin(state(3)), -state(2) * cos(state(3)), 0, 0, 0;
+        H << 1, 0, 0, 0, 0, 0, 0,
+             0, 1, 0, 0, 0, 0, 0;
+    }
+
+    template<>
+    void getMeasurementPrediction<PositionMeasurement, BICYCLELRModel>(
+        const typename BICYCLELRModel::ModelParameter& parameter,
+        const typename BICYCLELRModel::FilterVector& state,
+        typename PositionMeasurement::MeasurementVector& measurement
+    )
+    {
+        measurement << state(0), state(1);
+        // measurement << state(0) - state(2) * cos(state(3)), state(1) - state(2) * sin(state(3));
     }
 }
 

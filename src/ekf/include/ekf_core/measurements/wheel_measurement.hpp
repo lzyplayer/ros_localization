@@ -50,11 +50,11 @@ namespace SensorMeasurementConverter
              0, 0, 0, 1, -W/2, 0,
              0, 0, 0, 1, W/2, 0;
         H=H/parameter.R_w;
-        std::cout<<"v:"<< v <<std::endl;
-        std::cout<<"w:"<< w <<std::endl;
-        std::cout<<"fml:"<< fml <<std::endl;
-        std::cout<<"fmr:"<< fmr <<std::endl;
-        std::cout<<"轮速计H:"<< H <<std::endl;
+        // std::cout<<"v:"<< v <<std::endl;
+        // std::cout<<"w:"<< w <<std::endl;
+        // std::cout<<"fml:"<< fml <<std::endl;
+        // std::cout<<"fmr:"<< fmr <<std::endl;
+        // std::cout<<"轮速计H:"<< H <<std::endl;
     }
 
     template<>
