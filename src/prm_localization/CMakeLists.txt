@@ -5,7 +5,7 @@ project(prm_localization)
 add_compile_options(-std=c++11)
 
 set(${PROJECT_NAME}_CATKIN_DEPS
-        roscpp std_msgs rospy nodelet sensor_msgs pcl_ros pcl_msgs ndt_omp nav_msgs tf tf_conversions dbw_mkz_msgs
+        roscpp std_msgs rospy nodelet sensor_msgs pcl_ros pcl_msgs ndt_omp nav_msgs tf tf_conversions dbw_mkz_msgs message_filters
 )
 
 ## Find catkin macros and libraries
@@ -13,18 +13,26 @@ set(${PROJECT_NAME}_CATKIN_DEPS
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPS} )
 
+#show include
+# message(STATUS "localization include_directories:" )
+# get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+# foreach(dir ${dirs})
+#   message(STATUS "dir='${dir}'")
+# endforeach()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL 1.7 REQUIRED)
 include_directories(
-  include ${catkin_INCLUDE_DIRS}${PCL_INCLUDE_DIRS})
+  include  ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 message(STATUS "PCL_INCLUDE_DIRS:" ${PCL_INCLUDE_DIRS})
 message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
 message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})
+
+
 
 #nvidva
 #message(STATUS "CMAKE_SOURCE_DIR:" ${CMAKE_SOURCE_DIR})
@@ -56,7 +64,7 @@ endif()
 
 catkin_package(
  INCLUDE_DIRS include
-#  LIBRARIES prm_localization
+ LIBRARIES  globalmap_provider_nodelet rt_localization_nodelet
  CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPS}
 #  DEPENDS system_lib
 )
@@ -68,14 +76,22 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include)
+set(EIGEN_INCLUDE_PATH "/usr/include/eigen3")
 include_directories(
+  include
+  ${EIGEN_INCLUDE_PATH}
   ${catkin_INCLUDE_DIRS}
 #    ${Driveworks_INCLUDE_DIRS}
 #    ${CUDA_INCLUDE_DIRS}
 )
-#nodelets
 
+#node
+
+add_executable(streeing_to_motion src/streeing_to_motion.cpp)
+add_dependencies(streeing_to_motion ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(streeing_to_motion ${catkin_LIBRARIES})
+
+#nodelets
 
 add_library(globalmap_provider_nodelet src/globalmap_provider_nodelet.cpp)
 target_link_libraries(globalmap_provider_nodelet
@@ -89,15 +105,37 @@ target_link_libraries(rt_localization_nodelet
 #        ${PCL_LIBRARIES}
 #        ${Driveworks_LIBRARIES}
         )
+
+#install node
+install(TARGETS streeing_to_motion
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+#install library http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
+install(TARGETS rt_localization_nodelet globalmap_provider_nodelet
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        PATTERN ".svn" EXCLUDE)
+
+#install launch
+install(DIRECTORY launch
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        )
 #node
-# add_executable(blank
-#         src/blank.cpp
-#         )
-# add_dependencies(blank ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(blank
-#         ${catkin_LIBRARIES}
-#         ${PCL_LIBRARIES}
-#         )
+ add_executable(blank
+         src/blank.cpp
+         )
+ add_dependencies(blank ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+ target_link_libraries(blank
+         ${catkin_LIBRARIES}
+         ${PCL_LIBRARIES}
+         )
 # add_executable(rt_localization_debug
 #         src/rt_localization_debug.cpp
 #         )

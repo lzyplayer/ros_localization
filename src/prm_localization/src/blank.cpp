@@ -15,7 +15,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
 #include <pcl_conversions/pcl_conversions.h>
-//#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/surface/mls.h>
+#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/pcd_io.h>
 //eigen
 #include <Eigen/Dense>
@@ -34,18 +35,74 @@ using PointT = pcl::PointXYZ;
 
 
 int main(int argc, char *argv[]) {
-    /** eigen research**/
-    Matrix4f m4a ;
-    m4a.setRandom();
-    cout<<m4a(0)<<endl;
-    cout<<m4a(1)<<endl;
-    cout<<m4a(2)<<endl;
-    cout<<m4a(4)<<endl;
-    cout<<m4a(5)<<endl;
-    cout<<m4a(6)<<endl;
-    cout<<m4a(7)<<endl;
+    /**surface_smoothing**/
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    pcl::io::loadPCDFile ("/home/vickylzy/Desktop/object41.pcd", *cloud);
+    // Create a KD-Tree
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    // Output has the PointNormal type in order to store the normals calculated by MLS
+    pcl::PointCloud<pcl::PointNormal> mls_points;
+    // Init object (second point type is for the normals, even if unused)
+    pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
+    mls.setComputeNormals (true);
+    mls.setInputCloud (cloud);
+    mls.setPolynomialOrder (2);
+    mls.setSearchMethod (tree);
+    mls.setSearchRadius (0.05);
+    // Reconstruct
+    mls.process (mls_points);
+    // Save output
+    pcl::io::savePCDFile ("/home/vickylzy/Desktop/object41_normaled.pcd", mls_points);
+    /**pcl_viewer**/
+//    clock_t start = clock();
 
-cout<<m4a<<endl;
+//    registration.align(*result);
+
+//    clock_t end = clock();
+    //color
+//    for (size_t i = 0; i < full_cloud->points.size() ; ++i) {
+//        full_cloud->points[i].r = 255;
+//        full_cloud->points[i].g = 0;
+//        full_cloud->points[i].b = 0;
+//    }
+//    for (size_t i = 0; i < result->points.size() ; ++i) {
+//        result->points[i].r=255;
+//        result->points[i].g=255;
+//        result->points[i].b=255;
+//    }
+//    cout<<"init in "<< (double)(start  - init) / CLOCKS_PER_SEC << "second" << endl;
+//
+//    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr show (new pcl::PointCloud<pcl::PointXYZRGB>);
+////    *show = *result+*full_cloud;
+//    viewer.showCloud(show);
+//    while (!viewer.wasStopped ())
+//    {
+//    }
+
+}
+    /** tf research **/
+//    tf::StampedTransform transform1;
+//    tf::Quaternion tfquaternion;
+//    tf::Vector3 tfVector3;
+//    Eigen::Quaternionf eigenQ = euler2quat(1.5,2.0,-0.5);
+//    tfquaternion.setEuler(1.5,2.0,-0.5);
+//    tfVector3.setValue(2,3,4);
+//    transform1.setOrigin(tfVector3);
+//    transform1.setRotation(tfquaternion);
+    // cout<<transform1.getBasis()<<endl;
+    /** eigen research**/
+//    Matrix4f m4a ;
+//    m4a.setRandom();
+//    cout<<m4a(0)<<endl;
+//    cout<<m4a(1)<<endl;
+//    cout<<m4a(2)<<endl;
+//    cout<<m4a(4)<<endl;
+//    cout<<m4a(5)<<endl;
+//    cout<<m4a(6)<<endl;
+//    cout<<m4a(7)<<endl;
+//
+//cout<<m4a<<endl;
     /**send odom**/
 //    ros::init(argc, argv, "send_odom");
 //    ros::NodeHandle nh;
@@ -229,38 +286,3 @@ cout<<m4a<<endl;
 //
 //    }
 
-/**pcl_viewer**/
-//    clock_t start = clock();
-
-//    registration.align(*result);
-
-//    clock_t end = clock();
-    //color
-//    for (size_t i = 0; i < full_cloud->points.size() ; ++i) {
-//        full_cloud->points[i].r = 255;
-//        full_cloud->points[i].g = 0;
-//        full_cloud->points[i].b = 0;
-//    }
-//    for (size_t i = 0; i < result->points.size() ; ++i) {
-//        result->points[i].r=255;
-//        result->points[i].g=255;
-//        result->points[i].b=255;
-//    }
-//    cout<<"init in "<< (double)(start  - init) / CLOCKS_PER_SEC << "second" << endl;
-//
-//    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr show (new pcl::PointCloud<pcl::PointXYZRGB>);
-//    *show = *result+*full_cloud;
-//    viewer.showCloud(show);
-//    while (!viewer.wasStopped ())
-//    {
-//    }
-
-
-
-
-
-
-
-
-}

@@ -25,7 +25,8 @@
     <arg name="farPointThreshold" default="20" />
     <arg name="nearPointThreshold" default="0.98" />
 
-
+    <!--streeing_motion_node-->
+    <node pkg="prm_localization" type="streeing_to_motion" name="streeing2motion"/>
 <!--manager-->
     <node pkg="nodelet" type="nodelet" name="velodyne_nodelet_manager" args="manager" output="screen"/>
     <arg name="manager" default="velodyne_nodelet_manager"/>

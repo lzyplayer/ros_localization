@@ -1,37 +1,21 @@
 <?xml version="1.0"?>
 <launch>
 <!--argument-->
-    <arg name="points_topic" default="/lidar/vlp32_middle/PointCloud2"/>
+    <arg name="points_topic" default="/lidar/vlp32_middle/PointCloud2_compensated"/>
     <arg name="kf_odometry" default="/localization/ackermanekf"/>
     <arg name="map_tf" default="parkinglot_world" />
     <arg name="base_lidar_tf" default="velo_middle_localization" />
     <arg name="base_foot_tf" default="base_footprint"/>
-<!--    <arg name="map_tf" default="map" />-->
-<!--    <arg name="base_lidar_tf" default="velodyne" />-->
-<!-- 
-    //822
-    acce_dece1.bag  8.6   -7.3  1.57
-    acce_dece2.bag  15.6  -1.3   -2.91
-    normal.bag      20    0.3   0
-    sturn.bag       26.2    13.9  -1.3
-    circle.bag      12.5  3.5   -1.8
-    -->
-<!--    <arg name="init_x" default="2.0" />-->
-<!--    <arg name="init_y" default="1.2" />-->
-<!--    <arg name="init_yaw" default="0.0" /> -->
-    <!-- <arg name="init_x" default="31.8287" />
-    <arg name="init_y" default="1.121" />
-    <arg name="init_yaw" default="3.14" /> -->
-    <arg name="init_x" default="8.6" />
-    <arg name="init_y" default="-7.3" />
-    <arg name="init_yaw" default="1.57" />
+      
+    <arg name="init_x" default="2" />
+    <arg name="init_y" default="-17" />
+    <arg name="init_yaw" default="0.35" />
     <arg name="lidar_height" default="1.85"/>
     <arg name="trim_low" default="-0.4" />
     <arg name="trim_high" default="0.77" />
     <arg name="radius" default="25.0" />
-    <arg name="mapUpdateTime" default="1" />
-    <!-- <arg name="global_map_pcd_path" default="/home/vickylzy/workspaceROS/MAP_BAG/XJTU_underground_parkinglot/pcd/XJTU_mid_under.pcd" /> -->
-   <arg name="global_map_pcd_path" default="$(find prm_localization)/data/XJTU_mid_under.pcd" />
+    <arg name="mapUpdateTime" default="3" />
+   <arg name="global_map_pcd_path" default="$(find prm_localization)/data/changshu_UGPL.pcd" />
     <!--icp para-->
     <!--regis para-->
     <arg name="use_GPU_ICP" default="false"/>
@@ -65,7 +49,6 @@
         <param name="farPointThreshold" value="$(arg farPointThreshold)" />
         <param name="lidar_height" value="$(arg lidar_height)" />
         <param name="nearPointThreshold" value="$(arg nearPointThreshold)" />
-        <param name="use_GPU_ICP" value="$(arg use_GPU_ICP)"/>
         <param name="trim_low" value="$(arg trim_low)" />
         <param name="trim_high" value="$(arg trim_high)" />
         <param name="init_x" value="$(arg init_x)" />
@@ -81,7 +64,6 @@
         <param name="flag_slam_insout" value="$(arg flag_slam_insout)"  />
     </node>
     <node pkg="nodelet" type="nodelet" name="globalmap_provider_nodelet" args="load prm_localization/GlobalmapProviderNodelet $(arg manager_name)">
-        <param name="use_GPU_ICP" value="$(arg use_GPU_ICP)"/>
         <param name="lidar_height" value="$(arg lidar_height)" />
         <param name="trim_high" value="$(arg trim_high)" />
         <param name="trim_low" value="$(arg trim_low)" />

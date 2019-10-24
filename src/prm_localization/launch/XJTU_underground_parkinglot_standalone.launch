@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+	<param name="use_sim_time" type="bool" value="true" />
 <!--argument-->
     <arg name="points_topic" default="/lidar/vlp32_middle/PointCloud2" />
     <arg name="map_tf" default="odom_world" />
@@ -25,7 +26,8 @@
     <arg name="farPointThreshold" default="20" />
     <arg name="nearPointThreshold" default="1.3" />
 
-
+    <!--streeing_motion_node-->
+    <node pkg="prm_localization" type="streeing_to_motion" name="streeing2motion"/>
 <!--manager-->
 <!--    <node pkg="nodelet" type="nodelet" name="manager" args="manager" output="screen"/>-->
 <!--nodelet-->

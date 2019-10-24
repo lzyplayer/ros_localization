@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <ros/ros.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <tf/transform_datatypes.h>
 #include <nav_msgs/Odometry.h>
 
 /**function for conversation**/
@@ -71,6 +72,32 @@ Matrix4f odom2rotm(const nav_msgs::OdometryConstPtr& odom_msg){
     qf.z() = odom_msg->pose.pose.orientation.z;
     qf.w() = odom_msg->pose.pose.orientation.w;
     m4f.block(0,0,3,3) = quat2rot(qf);
+    return m4f;
+}
+Matrix4f odom2rotm(const nav_msgs::Odometry& odom_msg){
+    Matrix4f m4f;
+    m4f.setIdentity();
+    Quaternionf qf;
+    m4f(0,3) = odom_msg.pose.pose.position.x;
+    m4f(1,3) = odom_msg.pose.pose.position.y;
+    m4f(2,3) = odom_msg.pose.pose.position.z;
+    qf.x() = odom_msg.pose.pose.orientation.x;
+    qf.y() = odom_msg.pose.pose.orientation.y;
+    qf.z() = odom_msg.pose.pose.orientation.z;
+    qf.w() = odom_msg.pose.pose.orientation.w;
+    m4f.block(0,0,3,3) = quat2rot(qf);
+    return m4f;
+}
+Matrix4f tftransform2rotm(const tf::StampedTransform& stampedTransform){
+    Matrix4f m4f;
+    m4f.setIdentity();
+    tf::Quaternion tfquat =  stampedTransform.getRotation();
+    tf::Vector3 tfvec3 = stampedTransform.getOrigin();
+    Eigen::Quaternionf eigenQuat(tfquat.w(),tfquat.x(),tfquat.y(),tfquat.z());
+    m4f.block(0,0,3,3) = quat2rot(eigenQuat);
+    m4f(0,3)= tfvec3.x();
+    m4f(1,3)= tfvec3.y();
+    m4f(2,3)= tfvec3.z();
     return m4f;
 }
 

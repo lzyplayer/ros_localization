@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+    <param name="use_sim_time" type="bool" value="true" />
 <!--argument-->
     <arg name="points_topic" default="/lidar/vlp32_middle/PointCloud2"/>
     <arg name="kf_odometry" default="/localization/ackermanekf"/>
@@ -22,9 +23,9 @@
     <!-- <arg name="init_x" default="31.8287" />
     <arg name="init_y" default="1.121" />
     <arg name="init_yaw" default="3.14" /> -->
-    <arg name="init_x" default="8.6" />
-    <arg name="init_y" default="-7.3" />
-    <arg name="init_yaw" default="1.57" />
+    <arg name="init_x" default="26" />
+    <arg name="init_y" default="0" />
+    <arg name="init_yaw" default="3.14" />
     <arg name="lidar_height" default="1.85"/>
     <arg name="trim_low" default="-0.4" />
     <arg name="trim_high" default="0.77" />
@@ -49,7 +50,6 @@
     <!-- true代表激光定位算法输出INS系 -->
     <arg name="flag_slam_insout" default="true"/>
     <arg name="lp_odom_rate" default="0"/>
-
     <!--streeing_motion_node-->
     <node pkg="prm_localization" type="streeing_to_motion" name="streeing2motion"/>
 <!--manager-->

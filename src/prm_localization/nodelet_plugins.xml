@@ -1,7 +1,3 @@
-<library path="lib/libprm_localization_nodelet">
-<class name="prm_localization/PRMLocalizationNodelet" type="prm_localization::PRMLocalizationNodelet" base_class_type="nodelet::Nodelet" />
-</library>
-
 <library path="lib/libglobalmap_provider_nodelet">
 <class name="prm_localization/GlobalmapProviderNodelet" type="globalmap_ns::GlobalmapProviderNodelet" base_class_type="nodelet::Nodelet" />
 </library>

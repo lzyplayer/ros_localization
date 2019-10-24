@@ -62,3 +62,14 @@ target_link_libraries(align
   ${PCL_LIBRARIES}
   ndt_omp
 )
+
+#install node http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
+install(TARGETS align
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+#install library http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
+install(TARGETS ndt_omp
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
+
