@@ -1,5 +1,5 @@
 ## 实时定位系统
-
+Thanks to the great work of ![koide3](https://github.com/koide3/ndt_omp)'s NDT_OMP
 1. 实时定位系统采用UKF算法将较低频率的激光定位结果与高频的IMU数据，融合出高频且更加平滑的定位结果。
 
 2. ###### 依赖安装
@@ -8,7 +8,7 @@
    - alglib
    - eigen3
    - `sudo apt-get install -y libomp-dev libalglib-dev libeigen3-dev`以安装上述依赖
-   - [激光雷达驱动](http://wiki.ros.org/velodyne/Tutorials/Getting Started with the Velodyne VLP16)安装（实时运行必需）
+   - [激光雷达驱动]![velodyne_drive](http://wiki.ros.org/velodyne/Tutorials/Getting%20Started%20with%20the%20Velodyne%20VLP16)安装（实时运行必需）
 
 3. ###### 离线运行
 
@@ -47,11 +47,7 @@
 
       <img src="/home/vickylzy/.config/Typora/typora-user-images/1567480320406.png"  width="500px">
 
-   5. 启动实时定位系统`roslaunch prm_localization yuyao_factory.launch`
-
-      启动遇到错误请联系lzyplayer@stu.xjtu.edu.cn,并尝试
-
-      `roslaunch prm_localization yuyao_factory_selfManager.launch`启动
+   5. `roslaunch prm_localization yuyao_factory_selfManager.launch`启动
 
    6. 可以在rviz中查看到当前定位，并看到红色（激光），黄色（UKF滤波）两种里程计信息
 
@@ -140,6 +136,5 @@
    1. R矩阵反映测量量的误差大小，文件中的“cov_**” 分别是激光位置、朝向、速度，IMU的加速度、角速度；若认为误差偏大，则在launch文件基础上略微增大，反之同理
    2. Q矩阵反映模型对变量的信任度，文件中的“p**” 分别为激光位置、朝向、速度，IMU的加速度、角速度；若提高信任度，则在launch文件基础上略微减小，反之同理
 
-   email : 1159364090@qq.com
 
    
