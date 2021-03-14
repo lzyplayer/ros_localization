@@ -7,8 +7,9 @@ Thanks to the great work of ![koide3](https://github.com/koide3/ndt_omp)'s NDT_O
    - openMP
    - alglib
    - eigen3
-   - `sudo apt-get install -y libomp-dev libalglib-dev libeigen3-dev`以安装上述依赖
-   - [激光雷达驱动]![velodyne_drive](http://wiki.ros.org/velodyne/Tutorials/Getting%20Started%20with%20the%20Velodyne%20VLP16)安装（实时运行必需）
+   - dbw-mkz-msgs
+   - `sudo apt-get install -y libomp-dev libalglib-dev libeigen3-dev ros-kinetic-dbw-mkz-msgs`以安装上述依赖
+   - [激光雷达驱动](http://wiki.ros.org/velodyne/Tutorials/Getting Started with the Velodyne VLP16)安装（实时运行必需）
 
 3. ###### 离线运行
 
@@ -45,9 +46,7 @@ Thanks to the great work of ![koide3](https://github.com/koide3/ndt_omp)'s NDT_O
       红x轴 绿y轴 蓝z轴
       ```
 
-      <img src="/home/vickylzy/.config/Typora/typora-user-images/1567480320406.png"  width="500px">
-
-   5. `roslaunch prm_localization yuyao_factory_selfManager.launch`启动
+   5. 启动实时定位系统`roslaunch prm_localization yuyao_factory.launch`
 
    6. 可以在rviz中查看到当前定位，并看到红色（激光），黄色（UKF滤波）两种里程计信息
 
